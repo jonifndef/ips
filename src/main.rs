@@ -1,4 +1,5 @@
 use clap::Parser;
+use sysinfo::Networks;
 
 /// Application that prints your network interfaces with associated information, such as ipv4 address, status etc
 #[derive(Parser, Debug)]
@@ -26,5 +27,12 @@ fn main() {
 
     if args.mac {
         println!("Mac argument is set!");
+    }
+
+    let networks = Networks::new_with_refreshed_list();
+    for (interface_name, network) in &networks {
+        //println!("[{interface_name}]: {network:?}");
+        println!("{interface_name}");
+        //network.ip_networks()
     }
 }
