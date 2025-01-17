@@ -1,6 +1,7 @@
 use clap::Parser;
-use sysinfo::Networks;
-use std::net::IpAddr;
+use nix::ifaddrs;
+
+// Use this (nix crate), or MAAAYBE pnet crate?
 
 /// Application that prints your network interfaces with associated information, such as ipv4 address, status etc
 #[derive(Parser, Debug)]
@@ -33,22 +34,16 @@ fn get_interfaces(args: Args) {
         println!("Mac argument is set!");
     }
 
-    let networks = Networks::new_with_refreshed_list();
-    for (interface_name, data) in &networks {
-        println!("Interface: {interface_name}");
-        let ip_networks = data.ip_networks();
-        for ip_network in ip_networks {
-            let addr = &ip_network.addr;
-            match addr {
-                IpAddr::V4(ipv4) => {
-                    println!("IPv4: {}", ipv4);
-                }
-                IpAddr::V6(ipv6) => {
-                    println!("IPv6: {}", ipv6);
-                }
-            }
+    let if_addrs = match ifaddrs::getifaddrs() {
+        Ok(addrs) => addrs,
+        Err(e) => {
+            println!("Could not get network interfaces: {e}");
+            return;
         }
-        let mac_addr = data.mac_address();
-        println!("mac addr: {mac_addr}");
+    };
+
+    for if_addr in if_addrs {
+        //println!("{:?}, {:?}, {:?}, {:?}", if_addr.interface_name, if_addr.address, if_addr.netmask, if_addr.flags);
+        println!("{}", if_addr.interface_name);
     }
 }

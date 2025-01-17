@@ -5,4 +5,4 @@ edition = "2021"
 
 [dependencies]
 clap={ version = "4.5.26", features = ["derive"] }
-sysinfo = "0.33.1"
+nix = { version = "0.29.0", features = ["net"] }
