@@ -1,9 +1,13 @@
 use clap::Parser;
-//use nix::ifaddrs;
-use pnet::datalink::{self, NetworkInterface};
+use pnet::datalink;
 use pnet::ipnetwork::IpNetwork;
 
-// Use this (nix crate), or MAAAYBE pnet crate?
+// to get gateway, use something like:
+// route -n | grep 'UG[ \t]' | awk '{print $2}'
+// or:
+// route -n | grep 'UG[ \t]' | grep 'wlp2s0' | awk '{print $2}'
+// to get connections that use this interface, run:
+// nmcli -t con show | grep "wlp2s0", and parse the first field
 
 /// Application that prints your network interfaces with associated information, such as ipv4 address, status etc
 #[derive(Parser, Debug)]
@@ -23,7 +27,11 @@ struct Args {
 
     /// List NetworkManager connections that use the respective interfaces
     #[arg(short, long)]
-    connections: bool
+    connections: bool,
+
+    /// Disable colored output
+    #[arg(short, long)]
+    nocolor: bool
 }
 
 struct OutputFields {
@@ -46,16 +54,13 @@ fn get_interfaces(args: Args) {
         println!("Mac argument is set!");
     }
 
-    let interfaces = pnet::datalink::interfaces();
+    let interfaces = datalink::interfaces();
     for interface in interfaces {
         if interface.is_loopback() {
             continue;
         }
-        if interface.is_up() {
-            println!("its up");
-        }
         println!("interface name is: {}", interface.name);
-        for ip in interface.ips {
+        for ip in &interface.ips {
             match ip {
                 IpNetwork::V4(ip_addr) => { println!("Ipv4 addr: {}", ip_addr) }
                 IpNetwork::V6(ip_addr) => { println!("Ipv6 addr: {}", ip_addr) }
@@ -63,18 +68,9 @@ fn get_interfaces(args: Args) {
         }
 
         println!("{:?}", interface.mac);
+
+        if interface.is_up() {
+            println!("its up");
+        }
     }
-
-    //let if_addrs = match ifaddrs::getifaddrs() {
-    //    Ok(addrs) => addrs,
-    //    Err(e) => {
-    //        println!("Could not get network interfaces: {e}");
-    //        return;
-    //    }
-    //};
-
-    //for if_addr in if_addrs {
-    //    //println!("{:?}, {:?}, {:?}, {:?}", if_addr.interface_name, if_addr.address, if_addr.netmask, if_addr.flags);
-    //    println!("{}", if_addr.interface_name);
-    //}
 }
