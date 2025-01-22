@@ -1,6 +1,7 @@
 use clap::Parser;
 use pnet::datalink;
 use pnet::ipnetwork::IpNetwork;
+use std::process::{Command, Stdio};
 
 // to get gateway, use something like:
 // route -n | grep 'UG[ \t]' | awk '{print $2}'
@@ -8,12 +9,13 @@ use pnet::ipnetwork::IpNetwork;
 // route -n | grep 'UG[ \t]' | grep 'wlp2s0' | awk '{print $2}'
 // to get connections that use this interface, run:
 // nmcli -t con show | grep "wlp2s0", and parse the first field
+// nmcli -t con show | grep "wlp2s0" | awk -F: '{print $1}'
 
 /// Application that prints your network interfaces with associated information, such as ipv4 address, status etc
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    //List mac addresses for the interfaces
+    /// List mac addresses for the interfaces
     #[arg(short, long)]
     mac: bool,
 
@@ -55,12 +57,13 @@ fn get_interfaces(args: Args) {
     }
 
     let interfaces = datalink::interfaces();
-    for interface in interfaces {
+    for interface in interfaces
+    {
         if interface.is_loopback() {
             continue;
         }
         println!("interface name is: {}", interface.name);
-        for ip in &interface.ips {
+        for ip in interface.ips.iter() {
             match ip {
                 IpNetwork::V4(ip_addr) => { println!("Ipv4 addr: {}", ip_addr) }
                 IpNetwork::V6(ip_addr) => { println!("Ipv6 addr: {}", ip_addr) }
@@ -71,6 +74,64 @@ fn get_interfaces(args: Args) {
 
         if interface.is_up() {
             println!("its up");
+        }
+
+        // route -n | grep 'UG[ \t]' | grep 'wlp2s0' | awk '{print $2}'
+        let route_child = match Command::new("route")
+            .arg("-n")
+            .stdout(Stdio::piped())
+            .spawn() {
+            Ok(route_child) => route_child,
+            Err(_) => { return; }
+        };
+
+        let route_out = match route_child.stdout {
+            Some(route_out) => route_out,
+            None => { println!("None route_out"); return; }
+        };
+
+        let gw_grep_child = match Command::new("grep")
+            .arg("UG[ \\t]")
+            .stdin(Stdio::from(route_out))
+            .stdout(Stdio::piped())
+            .spawn() {
+            Ok(gw_grep_child) => gw_grep_child,
+            Err(_) => { return; }
+        };
+
+        let gw_grep_out = match gw_grep_child.stdout {
+            Some(gw_grep_out) => gw_grep_out,
+            None => { println!("None route_out"); return; }
+        };
+
+        let ifc_grep_child = match Command::new("grep")
+            .arg(interface.name)
+            .stdin(Stdio::from(gw_grep_out))
+            .stdout(Stdio::piped())
+            .spawn() {
+            Ok(ifc_grep_child) => ifc_grep_child,
+            Err(_) => { return; }
+        };
+
+        let ifc_grep_out = match ifc_grep_child.stdout {
+            Some(ifc_grep_out) => ifc_grep_out,
+            None => { println!("None route_out"); return; }
+        };
+
+        let awk_child = match Command::new("awk")
+            .arg("{print $2}")
+            .stdin(Stdio::from(ifc_grep_out))
+            .stdout(Stdio::piped())
+            .spawn() {
+            Ok(awk_child) => awk_child,
+            Err(_) => { return; }
+        };
+
+
+        let output = awk_child.wait_with_output().expect("Failed to wait on sed");
+        //let output_str = String::from_utf8(output.stdout);
+        if let Ok(out_str) = String::from_utf8(output.stdout) {
+            println!("Output: {}", out_str);
         }
     }
 }
