@@ -28,25 +28,24 @@ struct Args {
     nocolor: bool
 }
 
-struct OutputFields {
+#[derive(Default)]
+struct InterfaceData {
     interface_name: String,
     ip_addr: String,
     mac_addr: String,
     status: String,
-    ipv6_addr: String,
+    ipv6_addrs: Vec<String>,
     gateway: String,
-    connections: String
+    connections: Vec<String>
 }
 
 fn main() {
     let args = Args::parse();
-    get_interfaces(args);
+    let interfacesData = get_interface_data();
 }
 
-fn get_interfaces(args: Args) {
-    if args.mac {
-        println!("Mac argument is set!");
-    }
+fn get_interface_data() -> Vec::<InterfaceData> {
+    let interface_data = Vec::<InterfaceData>::new();
 
     let interfaces = datalink::interfaces();
     for interface in interfaces
@@ -54,26 +53,37 @@ fn get_interfaces(args: Args) {
         if interface.is_loopback() {
             continue;
         }
-        println!("interface name is: {}", interface.name);
+
+        let mut data = InterfaceData::default();
+
+        if interface.is_up() {
+            data.status = String::from("UP");
+        }
+        data.interface_name = interface.name.clone();
+
         for ip in interface.ips.iter() {
             match ip {
-                IpNetwork::V4(ip_addr) => { println!("Ipv4 addr: {}", ip_addr) }
-                IpNetwork::V6(ip_addr) => { println!("Ipv6 addr: {}", ip_addr) }
+                IpNetwork::V4(ip_addr) => {
+                    data.ip_addr = ip_addr.to_string();
+                }
+                IpNetwork::V6(ip_addr) => {
+                    data.ipv6_addrs.push(ip_addr.to_string())
+                }
             }
         }
 
-        println!("{:?}", interface.mac);
-
-        if interface.is_up() {
-            println!("its up");
+        if let Some(mac_addr) = interface.mac {
+            data.mac_addr = mac_addr.to_string();
         }
 
-        get_gateway(&interface);
-        get_connections(&interface);
+        get_gateway(&interface, &data);
+        get_connections(&interface, &data);
     }
+
+    interface_data
 }
 
-fn get_gateway(interface: &datalink::NetworkInterface) {
+fn get_gateway(interface: &datalink::NetworkInterface, data: &InterfaceData) {
     // route -n | grep 'UG[ \t]' | grep 'wlp2s0' | awk '{print $2}'
     let route_child = match Command::new("route")
         .arg("-n")
@@ -134,8 +144,9 @@ fn get_gateway(interface: &datalink::NetworkInterface) {
     }
 }
 
-fn get_connections(interface: &datalink::NetworkInterface) {
+fn get_connections(interface: &datalink::NetworkInterface, data: &InterfaceData) {
     // nmcli -t con show | grep "wlp2s0" | awk -F: '{print $1}'
+    // TODO: What if there are multiple connections using this interface?
     let nmcli_child = match Command::new("nmcli")
         .args(["-t", "con", "show"])
         .stdout(Stdio::piped())
