@@ -41,11 +41,13 @@ struct InterfaceData {
 
 fn main() {
     let args = Args::parse();
-    let interfacesData = get_interface_data();
+    let interfaces = get_interface_data();
+
+    print_interfaces(args, &interfaces);
 }
 
 fn get_interface_data() -> Vec::<InterfaceData> {
-    let interface_data = Vec::<InterfaceData>::new();
+    let mut interface_data = Vec::<InterfaceData>::new();
 
     let interfaces = datalink::interfaces();
     for interface in interfaces
@@ -76,14 +78,16 @@ fn get_interface_data() -> Vec::<InterfaceData> {
             data.mac_addr = mac_addr.to_string();
         }
 
-        get_gateway(&interface, &data);
-        get_connections(&interface, &data);
+        get_gateway(&interface, &mut data);
+        get_connections(&interface, &mut data);
+
+        interface_data.push(data);
     }
 
     interface_data
 }
 
-fn get_gateway(interface: &datalink::NetworkInterface, data: &InterfaceData) {
+fn get_gateway(interface: &datalink::NetworkInterface, data: &mut InterfaceData) {
     // route -n | grep 'UG[ \t]' | grep 'wlp2s0' | awk '{print $2}'
     let route_child = match Command::new("route")
         .arg("-n")
@@ -95,7 +99,7 @@ fn get_gateway(interface: &datalink::NetworkInterface, data: &InterfaceData) {
 
     let route_out = match route_child.stdout {
         Some(route_out) => route_out,
-        None => { println!("None route_out"); return; }
+        None => { return; }
     };
 
     let gw_grep_child = match Command::new("grep")
@@ -109,7 +113,7 @@ fn get_gateway(interface: &datalink::NetworkInterface, data: &InterfaceData) {
 
     let gw_grep_out = match gw_grep_child.stdout {
         Some(gw_grep_out) => gw_grep_out,
-        None => { println!("None route_out"); return; }
+        None => { return; }
     };
 
     let ifc_grep_child = match Command::new("grep")
@@ -123,7 +127,7 @@ fn get_gateway(interface: &datalink::NetworkInterface, data: &InterfaceData) {
 
     let ifc_grep_out = match ifc_grep_child.stdout {
         Some(ifc_grep_out) => ifc_grep_out,
-        None => { println!("None route_out"); return; }
+        None => { return; }
     };
 
     let awk_child = match Command::new("awk")
@@ -140,11 +144,11 @@ fn get_gateway(interface: &datalink::NetworkInterface, data: &InterfaceData) {
 
     if let Ok(out_str) = String::from_utf8(output.stdout) {
         let trimmed_out_str = out_str.trim_end();
-        println!("Output from gateway: {}", trimmed_out_str);
+        data.gateway = trimmed_out_str.to_string();
     }
 }
 
-fn get_connections(interface: &datalink::NetworkInterface, data: &InterfaceData) {
+fn get_connections(interface: &datalink::NetworkInterface, data: &mut InterfaceData) {
     // nmcli -t con show | grep "wlp2s0" | awk -F: '{print $1}'
     // TODO: What if there are multiple connections using this interface?
     let nmcli_child = match Command::new("nmcli")
@@ -187,6 +191,36 @@ fn get_connections(interface: &datalink::NetworkInterface, data: &InterfaceData)
 
     if let Ok(out_str) = String::from_utf8(output.stdout) {
         let trimmed_out_str = out_str.trim_end();
-        println!("Output from connections: {}", trimmed_out_str);
+        data.connections.push(trimmed_out_str.to_string());
     }
+}
+
+fn print_interfaces(args: Args, interfaces: &[InterfaceData]) {
+    //for interface in interfaces {
+    //    println!("{}", interface.interface_name);
+    //}
+    let mut name_len = 0;
+    for interface in interfaces {
+        if interface.interface_name.len() > name_len {
+            name_len = interface.interface_name.len();
+        }
+    }
+
+    let name_alignment = name_len;
+
+    for interface in interfaces {
+        println!("{:<name_width$} {:<ip_width$} {:<status_width$}", interface.interface_name, interface.ip_addr, interface.status, name_width = name_alignment, ip_width = 14, status_width = 10);
+    }
+
+
+
+
+    //let data = vec![
+    //    ("a_short_string", "foobar", "baz"),
+    //    ("a_bit_longer_string", "another_word", "majesty"),
+    //];
+
+    //for (col1, col2, col3) in data {
+    //    println!("{:<20} {:<15} {:<10}", col1, col2, col3);
+    //}
 }
