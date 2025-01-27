@@ -196,31 +196,34 @@ fn get_connections(interface: &datalink::NetworkInterface, data: &mut InterfaceD
 }
 
 fn print_interfaces(args: Args, interfaces: &[InterfaceData]) {
-    //for interface in interfaces {
-    //    println!("{}", interface.interface_name);
-    //}
     let mut name_len = 0;
+    let mut ipv6_len = 0;
+    let mut conn_len = 0;
     for interface in interfaces {
         if interface.interface_name.len() > name_len {
             name_len = interface.interface_name.len();
         }
+
+        // for ipv6 in interfae.ipv6 blabla...
+        // if ipv6.len() > ipv6_len {
+        //     ipv6_len = ipv6.len(); etc etc etc
+        // }
+
+        // for conn in interfae.connections blabla...
+        // if conn.len() > conn_len {
+        //     conn_len = conn.len(); etc etc etc
+        // }
     }
 
     let name_alignment = name_len;
 
     for interface in interfaces {
-        println!("{:<name_width$} {:<ip_width$} {:<status_width$}", interface.interface_name, interface.ip_addr, interface.status, name_width = name_alignment, ip_width = 14, status_width = 10);
+        let mut line = format!("{:<name_width$} {:<ip_width$} {:<status_width$}", interface.interface_name, interface.ip_addr, interface.status, name_width = name_alignment, ip_width = 14, status_width = 3);
+        if args.mac {
+            let mac = format!("{:<mac_width$}", interface.mac_addr, mac_width = 10);
+            line.push_str(&mac);
+        }
+
+        println!("{line}");
     }
-
-
-
-
-    //let data = vec![
-    //    ("a_short_string", "foobar", "baz"),
-    //    ("a_bit_longer_string", "another_word", "majesty"),
-    //];
-
-    //for (col1, col2, col3) in data {
-    //    println!("{:<20} {:<15} {:<10}", col1, col2, col3);
-    //}
 }
