@@ -49,14 +49,28 @@ struct OutputWidths {
     connections: usize
 }
 
+struct ColorTokens {
+
+}
+
+impl ColorTokens {
+    const ENDING: &str = "\x1b[0m";
+    const GREEN: &str = "\x1b[32m";
+    const BRIGHT_GREEN: &str = "\x1b[92m";
+    const YELLOW: &str = "\x1b[33m";
+    const RED: &str = "\x1b[31m";
+    const BLUE: &str = "\x1b[34m";
+}
+
+
 fn main() {
     let args = Args::parse();
-    let interfaces = get_interface_data();
+    let interfaces = get_interface_data(&args);
 
     print_interfaces(args, &interfaces);
 }
 
-fn get_interface_data() -> Vec::<InterfaceData> {
+fn get_interface_data(args: &Args) -> Vec::<InterfaceData> {
     let mut interface_data = Vec::<InterfaceData>::new();
 
     let interfaces = datalink::interfaces();
@@ -90,6 +104,10 @@ fn get_interface_data() -> Vec::<InterfaceData> {
 
         get_gateway(&interface, &mut data);
         get_connections(&interface, &mut data);
+
+        if !args.nocolor {
+            colorize_data_strings(&mut data);
+        }
 
         interface_data.push(data);
     }
@@ -206,11 +224,10 @@ fn get_connections(interface: &datalink::NetworkInterface, data: &mut InterfaceD
 }
 
 fn print_interfaces(args: Args, interfaces: &[InterfaceData]) {
-
     let widths = get_output_widths(&interfaces);
 
     for interface in interfaces {
-        let mut line = format!("{:<name_width$} {:<ip_width$} {:<status_width$}", interface.interface_name, interface.ip_addr, interface.status, name_width = widths.interface_name, ip_width = 14, status_width = 3);
+        let mut line = format!("{:<name_width$} {:<ip_width$} {:<status_width$}", interface.interface_name, interface.ip_addr, interface.status, name_width = widths.interface_name, ip_width = widths.ip_addr, status_width = widths.status);
 
         if args.mac {
             let mac = format!("{:<mac_width$}", interface.mac_addr, mac_width = widths.mac);
@@ -224,6 +241,14 @@ fn print_interfaces(args: Args, interfaces: &[InterfaceData]) {
 
         println!("{line}");
     }
+}
+
+fn colorize_data_strings(data: &mut InterfaceData) {
+    data.interface_name = format!("{}{}{}", ColorTokens::GREEN, data.interface_name, ColorTokens::ENDING);
+    data.ip_addr = format!("{}{}{}", ColorTokens::YELLOW, data.ip_addr, ColorTokens::ENDING);
+    data.status = format!("{}{}{}", ColorTokens::BRIGHT_GREEN, data.status, ColorTokens::ENDING);
+    data.mac_addr = format!("{}{}{}", ColorTokens::RED, data.mac_addr, ColorTokens::ENDING);
+    data.gateway = format!("{}{}{}", ColorTokens::BLUE, data.gateway, ColorTokens::ENDING);
 }
 
 fn get_output_widths(interfaces: &[InterfaceData]) -> OutputWidths {
@@ -257,3 +282,4 @@ fn get_output_widths(interfaces: &[InterfaceData]) -> OutputWidths {
 
     return widths
 }
+
