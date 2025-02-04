@@ -24,32 +24,28 @@ impl ColorTokens {
     const TOKENS_LEN: usize = 9;
 }
 
-pub fn print_interfaces(args: crate::Args, interfaces: &mut Vec<interface_data::InterfaceData>) {
+pub fn print_interfaces(args: crate::Args, interfaces: Vec<interface_data::InterfaceData>) {
     let widths = get_output_widths(&interfaces);
 
     for interface in interfaces {
-        if !args.nocolor {
-            colorize_data_strings(interface);
-        }
-
         let mut line = format!("{:<name_width$} {:<ip_width$} {:<status_width$}",
-            interface.interface_name,
-            interface.ip_addr,
-            interface.status,
+            colorize_string_if_enabled(&interface.interface_name, args.nocolor, ColorTokens::GREEN),
+            colorize_string_if_enabled(&interface.ip_addr, args.nocolor, ColorTokens::YELLOW),
+            colorize_string_if_enabled(&interface.status, args.nocolor, ColorTokens::BRIGHT_GREEN),
             name_width = widths.interface_name + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN },
             ip_width = widths.ip_addr + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN },
             status_width = widths.status + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
 
         if args.mac {
             let mac = format!("{:<mac_width$}",
-                interface.mac_addr,
+                colorize_string_if_enabled(&interface.mac_addr, args.nocolor, ColorTokens::RED),
                 mac_width = widths.mac + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
             line.push_str(&mac);
         }
 
         if args.gateway {
             let gateway = format!("{:<gateway_width$}",
-                interface.gateway,
+                colorize_string_if_enabled(&interface.gateway, args.nocolor, ColorTokens::BLUE),
                 gateway_width = widths.gateway + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
             line.push_str(&gateway);
         }
@@ -58,27 +54,15 @@ pub fn print_interfaces(args: crate::Args, interfaces: &mut Vec<interface_data::
     }
 }
 
-fn colorize_data_strings(data: &mut interface_data::InterfaceData) {
-    data.interface_name = format!(
-        "{}{}{}",
-        ColorTokens::GREEN, data.interface_name, ColorTokens::ENDING
-    );
-    data.ip_addr = format!(
-        "{}{}{}",
-        ColorTokens::YELLOW, data.ip_addr, ColorTokens::ENDING
-    );
-    data.status = format!(
-        "{}{}{}",
-        ColorTokens::BRIGHT_GREEN, data.status, ColorTokens::ENDING
-    );
-    data.mac_addr = format!(
-        "{}{}{}",
-        ColorTokens::RED, data.mac_addr, ColorTokens::ENDING
-    );
-    data.gateway = format!(
-        "{}{}{}",
-        ColorTokens::BLUE, data.gateway, ColorTokens::ENDING
-    );
+fn colorize_string_if_enabled(input: &String, nocolor: bool, color: &str) -> String {
+    if nocolor {
+        return input.clone();
+    } else {
+        return format!(
+            "{}{}{}",
+            color, input, ColorTokens::ENDING
+        );
+    }
 }
 
 fn get_output_widths(interfaces: &[interface_data::InterfaceData]) -> OutputWidths {

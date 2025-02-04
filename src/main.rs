@@ -31,8 +31,7 @@ pub struct Args {
 
 fn main() {
     let args = Args::parse();
-    let mut interfaces = interface_data::get_interface_data();
+    let interfaces = interface_data::get_interface_data();
 
-    printing::print_interfaces(args, &mut interfaces);
+    printing::print_interfaces(args, interfaces);
 }
-
