@@ -69,16 +69,20 @@ fn get_output_widths(interfaces: &[interface_data::InterfaceData]) -> OutputWidt
     let mut widths = OutputWidths {
         interface_name: 0,
         ip_addr: 14,
-        status: 3,
-        mac: 18,
+        status: 0,
+        mac: 17,
         ipv6: 0,
-        gateway: 14,
+        gateway: 11,
         connections: 0
     };
 
     for interface in interfaces {
         if interface.interface_name.len() > widths.interface_name {
             widths.interface_name = interface.interface_name.len();
+        }
+
+        if interface.status.len() > widths.status {
+            widths.status = interface.status.len();
         }
 
         for ipv6 in &interface.ipv6_addrs {

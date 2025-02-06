@@ -25,9 +25,7 @@ pub fn get_interface_data() -> Vec::<InterfaceData> {
 
         let mut data = InterfaceData::default();
 
-        if interface.is_up() {
-            data.status = String::from("UP");
-        }
+        data.status = String::from(if interface.is_up() { "UP" } else { "DOWN" });
         data.interface_name = interface.name.clone();
 
         for ip in interface.ips.iter() {
