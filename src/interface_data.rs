@@ -52,6 +52,7 @@ pub fn get_interface_data() -> Vec::<InterfaceData> {
     interface_data
 }
 
+// TODO: Use crate that allows usage of a single line-formatted command
 fn get_gateway(interface: &datalink::NetworkInterface, data: &mut InterfaceData) {
     // route -n | grep 'UG[ \t]' | grep 'wlp2s0' | awk '{print $2}'
     let route_child = match Command::new("route")

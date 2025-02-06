@@ -37,17 +37,31 @@ pub fn print_interfaces(args: crate::Args, interfaces: Vec<interface_data::Inter
             status_width = widths.status + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
 
         if args.mac {
-            let mac = format!("{:<mac_width$}",
+            let mac = format!(" {:<mac_width$}",
                 colorize_string_if_enabled(&interface.mac_addr, args.nocolor, ColorTokens::RED),
                 mac_width = widths.mac + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
             line.push_str(&mac);
         }
 
+        if args.ipv6 && !interface.ipv6_addrs.is_empty() {
+            let ipv6 = format!(" {:<ipv6_width$}",
+                colorize_string_if_enabled(&interface.ipv6_addrs[0], args.nocolor, ColorTokens::BLUE),
+                ipv6_width = widths.ipv6 + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
+                line.push_str(&ipv6);
+        }
+
         if args.gateway {
-            let gateway = format!("{:<gateway_width$}",
+            let gateway = format!(" {:<gateway_width$}",
                 colorize_string_if_enabled(&interface.gateway, args.nocolor, ColorTokens::BLUE),
                 gateway_width = widths.gateway + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
             line.push_str(&gateway);
+        }
+
+        if args.connections && !interface.connections.is_empty() {
+            let connection = format!(" {:<connection_width$}",
+                colorize_string_if_enabled(&interface.connections[0], args.nocolor, ColorTokens::BLUE),
+                connection_width = widths.connections + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
+                line.push_str(&connection);
         }
 
         println!("{line}");
