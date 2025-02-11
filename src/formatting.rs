@@ -80,12 +80,12 @@ mod tests {
             }
         ];
 
-        print_interfaces(args, interfaces);
+        get_formatted_output(args, interfaces);
         assert!(true);
     }
 }
 
-pub fn print_interfaces(args: crate::Args, interfaces: Vec<interface_data::InterfaceData>) {
+pub fn get_formatted_output(args: crate::Args, interfaces: Vec<interface_data::InterfaceData>) -> Vec<String> {
     let widths = get_output_widths(&interfaces);
     let mut lines: Vec<String> = vec![];
 
@@ -150,9 +150,7 @@ pub fn print_interfaces(args: crate::Args, interfaces: Vec<interface_data::Inter
         }
     }
 
-    for line in lines {
-        println!("{line}");
-    }
+    return lines;
 }
 
 fn colorize_string_if_enabled(input: &String, nocolor: bool, color: &str) -> String {

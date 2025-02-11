@@ -1,7 +1,7 @@
 use clap::Parser;
 
 mod interface_data;
-mod printing;
+mod formatting;
 
 /// Application that prints your network interfaces with associated information, such as ipv4 address, status etc
 #[derive(Parser, Debug)]
@@ -32,6 +32,9 @@ pub struct Args {
 fn main() {
     let args = Args::parse();
     let interfaces = interface_data::get_interface_data();
+    let output = formatting::get_formatted_output(args, interfaces);
 
-    printing::print_interfaces(args, interfaces);
+    for line in output {
+        println!("{line}");
+    }
 }
