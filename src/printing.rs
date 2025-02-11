@@ -58,9 +58,12 @@ pub fn print_interfaces(args: crate::Args, interfaces: Vec<interface_data::Inter
                     line.push_str(&ipv6);
                     ipv6_idx += 1;
                 } else {
-                    let ipv6 = format!(" {:<ipv6_width$}",
+                    let mut ipv6 = format!(" {:<ipv6_width$}",
                         colorize_string_if_enabled(addr, args.nocolor, ColorTokens::BLUE),
                         ipv6_width = widths.ipv6 + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
+                    let width = widths.interface_name + 1 + widths.ip_addr + 1 + widths.status + if args.mac { widths.mac + 1 } else { 0 };
+                    let prefix = format!("{:<prefix_width$}", "", prefix_width = width);
+                    ipv6.insert_str(0, &prefix);
                     lines.push(ipv6);
                     ipv6_idx += 1;
                 }
