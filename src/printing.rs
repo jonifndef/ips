@@ -24,6 +24,67 @@ impl ColorTokens {
     const TOKENS_LEN: usize = 9;
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ipv6_printing() {
+        let args = crate::Args {
+            mac: false,
+            ipv6: true,
+            gateway: false,
+            connections: false,
+            nocolor: false
+        };
+
+        let interfaces = vec![
+            interface_data::InterfaceData {
+                interface_name: String::from("ollebolle"),
+                ip_addr: String::from("192.168.1.2/24"),
+                mac_addr: String::from(""),
+                status: String::from("UP"),
+                ipv6_addrs: vec![
+                    String::from("fdaa:bbcc:ddee:0:9347:deb9:2fa3:82a3/64"),
+                    String::from("fe80::5fa:c189:2ae:94a2/64"),
+                    String::from("fa20:bbdd:c189:2ae:94:a21f:b71d/64"),
+                ],
+                gateway: String::from(""),
+                connections: vec![]
+            },
+            interface_data::InterfaceData {
+                interface_name: String::from("ollebolle_the_second"),
+                ip_addr: String::from("192.168.1.3/24"),
+                mac_addr: String::from(""),
+                status: String::from("UP"),
+                ipv6_addrs: vec![
+                    String::from("fe80::5fa:c189:2ae:94a2/64"),
+                    String::from("fdaa:bbcc:ddee:0:9347:deb9:2fa3:82a3:bbff:aaee/64"),
+                    String::from("fa20:bbdd:c189:2ae:94:a21f:b71d/64"),
+                ],
+                gateway: String::from(""),
+                connections: vec![]
+            },
+            interface_data::InterfaceData {
+                interface_name: String::from("ollebolle_yo"),
+                ip_addr: String::from("192.168.1.4/24"),
+                mac_addr: String::from(""),
+                status: String::from("UP"),
+                ipv6_addrs: vec![
+                    String::from("fe80::5fa::::94a2/64"),
+                    String::from("fa20:bbdd:c189:2ae:94:a21f/64"),
+                    String::from("fdaa:bbcc:ddee:0:9347:deb9:2fa3:82a3:ccff/64"),
+                ],
+                gateway: String::from(""),
+                connections: vec![]
+            }
+        ];
+
+        print_interfaces(args, interfaces);
+        assert!(true);
+    }
+}
+
 pub fn print_interfaces(args: crate::Args, interfaces: Vec<interface_data::InterfaceData>) {
     let widths = get_output_widths(&interfaces);
     let mut lines: Vec<String> = vec![];
