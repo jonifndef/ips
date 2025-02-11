@@ -29,7 +29,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_ipv6_printing() {
+    fn test_ipv6_formatting() {
         let args = crate::Args {
             mac: false,
             ipv6: true,
@@ -80,8 +80,12 @@ mod tests {
             }
         ];
 
-        get_formatted_output(args, interfaces);
-        assert!(true);
+        let output = get_formatted_output(args, interfaces);
+        //for line in output.iter() {
+        //    println!("output len {}", line.len());
+        //    println!("{line}");
+        //}
+        assert!(output[0].len() == 124);
     }
 }
 
