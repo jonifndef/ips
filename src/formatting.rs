@@ -87,6 +87,72 @@ mod tests {
         //}
         assert!(output[0].len() == 124);
     }
+
+    #[test]
+    fn test_ipv6_formatting_with_connections() {
+        let args = crate::Args {
+            mac: false,
+            ipv6: true,
+            gateway: false,
+            connections: true,
+            nocolor: false
+        };
+
+        let interfaces = vec![
+            interface_data::InterfaceData {
+                interface_name: String::from("ollebolle"),
+                ip_addr: String::from("192.168.1.2/24"),
+                mac_addr: String::from(""),
+                status: String::from("UP"),
+                ipv6_addrs: vec![
+                    String::from("fdaa:bbcc:ddee:0:9347:deb9:2fa3:82a3/64"),
+                    String::from("fe80::5fa:c189:2ae:94a2/64"),
+                    String::from("fa20:bbdd:c189:2ae:94:a21f:b71d/64"),
+                ],
+                gateway: String::from(""),
+                connections: vec![
+                    String::from("hejconbacon"),
+                    String::from("olle_connection_yo"),
+                    String::from("mmmm"),
+                ]
+            },
+            interface_data::InterfaceData {
+                interface_name: String::from("ollebolle_the_second"),
+                ip_addr: String::from("192.168.1.3/24"),
+                mac_addr: String::from(""),
+                status: String::from("UP"),
+                ipv6_addrs: vec![],
+                gateway: String::from(""),
+                connections: vec![
+                    String::from("olle_connection_yo"),
+                    String::from("hejconbacon"),
+                    String::from("mmmm"),
+                ]
+            },
+            interface_data::InterfaceData {
+                interface_name: String::from("ollebolle_yo"),
+                ip_addr: String::from("192.168.1.4/24"),
+                mac_addr: String::from(""),
+                status: String::from("UP"),
+                ipv6_addrs: vec![
+                    String::from("fe80::5fa::::94a2/64"),
+                ],
+                gateway: String::from(""),
+                connections: vec![
+                    String::from("mmmm"),
+                    String::from("hejconbacon"),
+                    String::from("olle_connection_yo"),
+                ]
+            }
+        ];
+
+        let output = get_formatted_output(args, interfaces);
+        for line in output.iter() {
+        //    println!("output len {}", line.len());
+            println!("{line}");
+        }
+        assert!(true);
+    }
 }
 
 pub fn get_formatted_output(args: crate::Args, interfaces: Vec<interface_data::InterfaceData>) -> Vec<String> {
