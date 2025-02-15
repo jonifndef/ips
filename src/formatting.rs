@@ -29,7 +29,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_ipv6_formatting() {
+    fn test_formatting_ipv6() {
         let args = crate::Args {
             mac: false,
             ipv6: true,
@@ -89,7 +89,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ipv6_formatting_with_connections() {
+    fn test_formatting_ipv6_connections() {
         let args = crate::Args {
             mac: false,
             ipv6: true,
@@ -149,6 +149,63 @@ mod tests {
         let output = get_formatted_output(args, interfaces);
         for line in output.iter() {
         //    println!("output len {}", line.len());
+        //    println!("{line}");
+        }
+        assert!(true);
+    }
+
+    #[test]
+    fn test_formatting_mac_ipv6_gw_connection() {
+        let args = crate::Args {
+            mac: true,
+            ipv6: true,
+            gateway: true,
+            connections: true,
+            nocolor: false
+        };
+
+        let interfaces = vec![
+            interface_data::InterfaceData {
+                interface_name: String::from("ollebolle"),
+                ip_addr: String::from("192.168.1.2/24"),
+                mac_addr: String::from("02:42:2f:ff:49:ae"),
+                status: String::from("UP"),
+                ipv6_addrs: vec![
+                    String::from("fdaa:bbcc:ddee:0:9347:deb9:2fa3:82a3/64"),
+                    String::from("fe80::5fa:c189:2ae:94a2/64"),
+                ],
+                gateway: String::from(""),
+                connections: vec![
+                    String::from("hejconbacon"),
+                ]
+            },
+            interface_data::InterfaceData {
+                interface_name: String::from("ollebolle_the_second"),
+                ip_addr: String::from("192.168.1.3/24"),
+                mac_addr: String::from("03:42:2f:ff:49:ae"),
+                status: String::from("UP"),
+                ipv6_addrs: vec![],
+                gateway: String::from(""),
+                connections: vec![
+                    String::from("olle_connection_yo"),
+                ]
+            },
+            interface_data::InterfaceData {
+                interface_name: String::from("ollebolle_yo"),
+                ip_addr: String::from("192.168.1.4/24"),
+                mac_addr: String::from("04:42:2f:ff:49:ae"),
+                status: String::from("UP"),
+                ipv6_addrs: vec![],
+                gateway: String::from(""),
+                connections: vec![
+                    String::from("mmmm"),
+                ]
+            }
+        ];
+
+        let output = get_formatted_output(args, interfaces);
+        for line in output.iter() {
+        //    println!("output len {}", line.len());
             println!("{line}");
         }
         assert!(true);
@@ -186,6 +243,9 @@ pub fn get_formatted_output(args: crate::Args, interfaces: Vec<interface_data::I
                     colorize_string_if_enabled(addr, args.nocolor, ColorTokens::BLUE),
                     ipv6_width = widths.ipv6 + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
                 if let Some(line) = lines.get_mut(ipv6_idx) {
+                    // If there are columns that are not printed for a interface here, e.g. mac, we
+                    // need to prepend whitespace to fit the columns, like we do below with the
+                    // 'let prefix = format!("{prefix_width$}", "",...' statement
                     line.push_str(&ipv6);
                     ipv6_idx += 1;
                 } else {
@@ -201,21 +261,25 @@ pub fn get_formatted_output(args: crate::Args, interfaces: Vec<interface_data::I
             }
         }
 
-        if args.gateway {
-            let gateway = format!(" {:<gateway_width$}",
-                colorize_string_if_enabled(&interface.gateway, args.nocolor, ColorTokens::BLUE),
-                gateway_width = widths.gateway + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
-            if let Some(line) = lines.get_mut(i) {
-                line.push_str(&gateway);
-            }
-        }
-
-        if args.connections && !interface.connections.is_empty() {
-            let connection = format!(" {:<connection_width$}",
-                colorize_string_if_enabled(&interface.connections[0], args.nocolor, ColorTokens::BLUE),
-                connection_width = widths.connections + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
-            if let Some(line) = lines.get_mut(i) {
-                line.push_str(&connection);
+        if args.connections {
+            let mut conn_idx = i;
+            for addr in interface.connections.iter() {
+                let connection = format!(" {:<connection_width$}",
+                    colorize_string_if_enabled(addr, args.nocolor, ColorTokens::BLUE),
+                    connection_width = widths.connections + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
+                if let Some(line) = lines.get_mut(conn_idx) {
+                    line.push_str(&connection);
+                    conn_idx += 1;
+                } else {
+                    let mut connection = format!(" {:<connection_width$}",
+                        colorize_string_if_enabled(addr, args.nocolor, ColorTokens::BLUE),
+                        connection_width = widths.connections + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
+                    let width = widths.interface_name + 1 + widths.ip_addr + 1 + widths.status + if args.mac { widths.mac + 1 } else { 0 } + if args.ipv6 { widths.ipv6 + 1 } else { 0 };
+                    let prefix = format!("{:<prefix_width$}", "", prefix_width = width);
+                    connection.insert_str(0, &prefix);
+                    lines.push(connection);
+                    conn_idx += 1;
+                }
             }
         }
     }
