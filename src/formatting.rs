@@ -81,11 +81,16 @@ mod tests {
         ];
 
         let output = get_formatted_output(args, interfaces);
-        //for line in output.iter() {
-        //    println!("output len {}", line.len());
-        //    println!("{line}");
-        //}
+
         assert!(output[0].len() == 124);
+        assert!(output[1].len() == 97);
+        assert!(output[2].len() == 97);
+        assert!(output[3].len() == 124);
+        assert!(output[4].len() == 97);
+        assert!(output[5].len() == 97);
+        assert!(output[6].len() == 124);
+        assert!(output[7].len() == 97);
+        assert!(output[8].len() == 97);
     }
 
     #[test]
@@ -147,11 +152,16 @@ mod tests {
         ];
 
         let output = get_formatted_output(args, interfaces);
-        for line in output.iter() {
-        //    println!("output len {}", line.len());
-        //    println!("{line}");
-        }
-        assert!(true);
+
+        assert!(output[0].len() == 142);
+        assert!(output[1].len() == 115);
+        assert!(output[2].len() == 115);
+        assert!(output[3].len() == 133);
+        assert!(output[4].len() == 106);
+        assert!(output[5].len() == 106);
+        assert!(output[6].len() == 142);
+        assert!(output[7].len() == 106);
+        assert!(output[8].len() == 106);
     }
 
     #[test]
@@ -204,11 +214,11 @@ mod tests {
         ];
 
         let output = get_formatted_output(args, interfaces);
-        for line in output.iter() {
-        //    println!("output len {}", line.len());
-            println!("{line}");
-        }
-        assert!(true);
+
+        assert!(output[0].len() == 169);
+        assert!(output[1].len() == 105);
+        assert!(output[2].len() == 160);
+        assert!(output[3].len() == 160);
     }
 }
 
@@ -217,7 +227,8 @@ pub fn get_formatted_output(args: crate::Args, interfaces: Vec<interface_data::I
     let mut lines: Vec<String> = vec![];
 
     for interface in interfaces {
-        let i = lines.len();
+        let lines_end_index = lines.len();
+        //let num_lines_for_interface = get_num_lines(&interface);
         let line = format!("{:<name_width$} {:<ip_width$} {:<status_width$}",
             colorize_string_if_enabled(&interface.interface_name, args.nocolor, ColorTokens::GREEN),
             colorize_string_if_enabled(&interface.ip_addr, args.nocolor, ColorTokens::YELLOW),
@@ -231,21 +242,29 @@ pub fn get_formatted_output(args: crate::Args, interfaces: Vec<interface_data::I
             let mac = format!(" {:<mac_width$}",
                 colorize_string_if_enabled(&interface.mac_addr, args.nocolor, ColorTokens::RED),
                 mac_width = widths.mac + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
-            if let Some(line) = lines.get_mut(i) {
+            if let Some(line) = lines.get_mut(lines_end_index) {
                 line.push_str(&mac);
             }
         }
 
         if args.ipv6 {
-            let mut ipv6_idx = i;
+            let mut ipv6_idx = lines_end_index;
             for addr in interface.ipv6_addrs.iter() {
-                let ipv6 = format!(" {:<ipv6_width$}",
+                let mut ipv6 = format!(" {:<ipv6_width$}",
                     colorize_string_if_enabled(addr, args.nocolor, ColorTokens::BLUE),
                     ipv6_width = widths.ipv6 + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
                 if let Some(line) = lines.get_mut(ipv6_idx) {
                     // If there are columns that are not printed for a interface here, e.g. mac, we
                     // need to prepend whitespace to fit the columns, like we do below with the
                     // 'let prefix = format!("{prefix_width$}", "",...' statement
+                    if args.mac && interface.mac_addr == "" {
+                        let prefix = format!("{:<prefix_width$}", "", prefix_width = widths.mac);
+                        ipv6.insert_str(0, &prefix);
+                    }
+                    if args.ipv6 && interface.ipv6_addrs.is_empty() {
+                        let prefix = format!("{:<prefix_width$}", "", prefix_width = widths.ipv6);
+                        ipv6.insert_str(0, &prefix);
+                    }
                     line.push_str(&ipv6);
                     ipv6_idx += 1;
                 } else {
@@ -262,12 +281,20 @@ pub fn get_formatted_output(args: crate::Args, interfaces: Vec<interface_data::I
         }
 
         if args.connections {
-            let mut conn_idx = i;
+            let mut conn_idx = lines_end_index;
             for addr in interface.connections.iter() {
-                let connection = format!(" {:<connection_width$}",
+                let mut connection = format!(" {:<connection_width$}",
                     colorize_string_if_enabled(addr, args.nocolor, ColorTokens::BLUE),
                     connection_width = widths.connections + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
                 if let Some(line) = lines.get_mut(conn_idx) {
+                    if args.mac && interface.mac_addr == "" {
+                        let prefix = format!(" {:<prefix_width$}", "", prefix_width = widths.mac);
+                        connection.insert_str(0, &prefix);
+                    }
+                    if args.ipv6 && interface.ipv6_addrs.is_empty() {
+                        let prefix = format!(" {:<prefix_width$}", "", prefix_width = widths.ipv6);
+                        connection.insert_str(0, &prefix);
+                    }
                     line.push_str(&connection);
                     conn_idx += 1;
                 } else {
@@ -285,6 +312,18 @@ pub fn get_formatted_output(args: crate::Args, interfaces: Vec<interface_data::I
     }
 
     return lines;
+}
+
+fn get_num_lines(interface_data: &interface_data::InterfaceData) -> usize {
+    let mut num_lines = 0;
+    if interface_data.ipv6_addrs.len() > num_lines {
+        num_lines = interface_data.ipv6_addrs.len();
+    }
+    if interface_data.connections.len() > num_lines {
+        num_lines = interface_data.connections.len();
+    }
+
+    num_lines
 }
 
 fn colorize_string_if_enabled(input: &String, nocolor: bool, color: &str) -> String {
