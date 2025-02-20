@@ -6,8 +6,8 @@ use std::process::{Command, Stdio};
 pub struct InterfaceData {
     pub interface_name: String,
     pub ip_addr: String,
-    pub mac_addr: String,
     pub status: String,
+    pub mac_addr: String,
     pub ipv6_addrs: Vec<String>,
     pub gateway: String,
     pub connections: Vec<String>

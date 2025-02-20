@@ -222,96 +222,99 @@ mod tests {
     }
 }
 
-pub fn get_formatted_output(args: crate::Args, interfaces: Vec<interface_data::InterfaceData>) -> Vec<String> {
-    let widths = get_output_widths(&interfaces);
+pub fn get_formatted_output(args: crate::Args, mut interfaces: Vec<interface_data::InterfaceData>) -> Vec<String> {
+    //let widths = get_output_widths(&interfaces, &args);
+
+    if !args.nocolor {
+        interfaces = get_colorized_interfaces_data(interfaces);
+    }
+
+    let chosen_cols = get_chosen_cols(&args);
     let mut lines: Vec<String> = vec![];
 
     for interface in interfaces {
-        let lines_end_index = lines.len();
-        //let num_lines_for_interface = get_num_lines(&interface);
-        let line = format!("{:<name_width$} {:<ip_width$} {:<status_width$}",
-            colorize_string_if_enabled(&interface.interface_name, args.nocolor, ColorTokens::GREEN),
-            colorize_string_if_enabled(&interface.ip_addr, args.nocolor, ColorTokens::YELLOW),
-            colorize_string_if_enabled(&interface.status, args.nocolor, ColorTokens::BRIGHT_GREEN),
-            name_width = widths.interface_name + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN },
-            ip_width = widths.ip_addr + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN },
-            status_width = widths.status + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
-        lines.push(line);
+        let num_lines_for_interface = get_num_lines(&interface);
+        let mut lines_for_interface: Vec<String> = vec![];
 
-        if args.mac {
-            let mac = format!(" {:<mac_width$}",
-                colorize_string_if_enabled(&interface.mac_addr, args.nocolor, ColorTokens::RED),
-                mac_width = widths.mac + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
-            if let Some(line) = lines.get_mut(lines_end_index) {
-                line.push_str(&mac);
+        for line_num in 0..num_lines_for_interface {
+            let mut line = String::default();
+            for col in &chosen_cols {
+                let data = get_data_for_col(&interface, line_num, col);
+                line.push_str(data);
             }
+
+            lines_for_interface.push(line);
         }
 
-        if args.ipv6 {
-            let mut ipv6_idx = lines_end_index;
-            for addr in interface.ipv6_addrs.iter() {
-                let mut ipv6 = format!(" {:<ipv6_width$}",
-                    colorize_string_if_enabled(addr, args.nocolor, ColorTokens::BLUE),
-                    ipv6_width = widths.ipv6 + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
-                if let Some(line) = lines.get_mut(ipv6_idx) {
-                    // If there are columns that are not printed for a interface here, e.g. mac, we
-                    // need to prepend whitespace to fit the columns, like we do below with the
-                    // 'let prefix = format!("{prefix_width$}", "",...' statement
-                    if args.mac && interface.mac_addr == "" {
-                        let prefix = format!("{:<prefix_width$}", "", prefix_width = widths.mac);
-                        ipv6.insert_str(0, &prefix);
-                    }
-                    if args.ipv6 && interface.ipv6_addrs.is_empty() {
-                        let prefix = format!("{:<prefix_width$}", "", prefix_width = widths.ipv6);
-                        ipv6.insert_str(0, &prefix);
-                    }
-                    line.push_str(&ipv6);
-                    ipv6_idx += 1;
-                } else {
-                    let mut ipv6 = format!(" {:<ipv6_width$}",
-                        colorize_string_if_enabled(addr, args.nocolor, ColorTokens::BLUE),
-                        ipv6_width = widths.ipv6 + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
-                    let width = widths.interface_name + 1 + widths.ip_addr + 1 + widths.status + if args.mac { widths.mac + 1 } else { 0 };
-                    let prefix = format!("{:<prefix_width$}", "", prefix_width = width);
-                    ipv6.insert_str(0, &prefix);
-                    lines.push(ipv6);
-                    ipv6_idx += 1;
-                }
-            }
-        }
-
-        if args.connections {
-            let mut conn_idx = lines_end_index;
-            for addr in interface.connections.iter() {
-                let mut connection = format!(" {:<connection_width$}",
-                    colorize_string_if_enabled(addr, args.nocolor, ColorTokens::BLUE),
-                    connection_width = widths.connections + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
-                if let Some(line) = lines.get_mut(conn_idx) {
-                    if args.mac && interface.mac_addr == "" {
-                        let prefix = format!(" {:<prefix_width$}", "", prefix_width = widths.mac);
-                        connection.insert_str(0, &prefix);
-                    }
-                    if args.ipv6 && interface.ipv6_addrs.is_empty() {
-                        let prefix = format!(" {:<prefix_width$}", "", prefix_width = widths.ipv6);
-                        connection.insert_str(0, &prefix);
-                    }
-                    line.push_str(&connection);
-                    conn_idx += 1;
-                } else {
-                    let mut connection = format!(" {:<connection_width$}",
-                        colorize_string_if_enabled(addr, args.nocolor, ColorTokens::BLUE),
-                        connection_width = widths.connections + if args.nocolor { 0 } else { ColorTokens::TOKENS_LEN });
-                    let width = widths.interface_name + 1 + widths.ip_addr + 1 + widths.status + if args.mac { widths.mac + 1 } else { 0 } + if args.ipv6 { widths.ipv6 + 1 } else { 0 };
-                    let prefix = format!("{:<prefix_width$}", "", prefix_width = width);
-                    connection.insert_str(0, &prefix);
-                    lines.push(connection);
-                    conn_idx += 1;
-                }
-            }
-        }
+        lines.append(&mut lines_for_interface);
     }
 
     return lines;
+}
+
+fn get_data_for_col<'a>(interface: &'a interface_data::InterfaceData, linenum: usize, col: &str) -> &'a str {
+    let data: &str = match col {
+        "interface_name" => interface.interface_name.as_str(),
+        "ip_addr" => interface.ip_addr.as_str(),
+        "status" => interface.status.as_str(),
+        "mac_addr" => interface.mac_addr.as_str(),
+        "ipv6_addrs" => if let Some(addr) = interface.ipv6_addrs.get(linenum) { addr.as_str() } else { "" },
+        "gateway" => interface.gateway.as_str(),
+        "connections" => if let Some(connection) = interface.connections.get(linenum) { connection.as_str() } else { "" },
+        _ => ""
+    };
+
+    data
+}
+
+fn get_colorized_interfaces_data(interfaces: Vec<interface_data::InterfaceData>) -> Vec<interface_data::InterfaceData> {
+    interfaces.into_iter().map(
+        |interface| {
+            interface_data::InterfaceData {
+                interface_name: format!("hej{}hej", interface.interface_name),
+                ip_addr: format!("hej{}hej", interface.ip_addr),
+                status: format!("hej{}hej", interface.status),
+                mac_addr: format!("hej{}hej", interface.mac_addr),
+                ipv6_addrs: interface.ipv6_addrs.into_iter().map(
+                    |ipv6_addr| {
+                        format!("hej{}hej", ipv6_addr)
+                    }
+                ).collect(),
+                gateway: format!("hej{}hej", interface.gateway),
+                connections: interface.connections.into_iter().map(
+                    |connection| {
+                        format!("hej{}hej", connection)
+                    }
+                ).collect()
+            }
+        }
+    ).collect()
+}
+
+fn get_chosen_cols(args: &crate::Args) -> Vec<&str> {
+    let mut cols = vec![
+        "interface_name",
+        "ip_addr",
+        "status"
+    ];
+
+    if args.mac {
+        cols.push("mac_addr");
+    }
+
+    if args.ipv6 {
+        cols.push("ipv6_addrs");
+    }
+
+    if args.gateway {
+        cols.push("gateway");
+    }
+
+    if args.connections {
+        cols.push("connections");
+    }
+
+    cols
 }
 
 fn get_num_lines(interface_data: &interface_data::InterfaceData) -> usize {
@@ -326,18 +329,7 @@ fn get_num_lines(interface_data: &interface_data::InterfaceData) -> usize {
     num_lines
 }
 
-fn colorize_string_if_enabled(input: &String, nocolor: bool, color: &str) -> String {
-    if nocolor {
-        return input.clone();
-    } else {
-        return format!(
-            "{}{}{}",
-            color, input, ColorTokens::ENDING
-        );
-    }
-}
-
-fn get_output_widths(interfaces: &[interface_data::InterfaceData]) -> OutputWidths {
+fn get_output_widths(interfaces: &[interface_data::InterfaceData], args: &crate::Args) -> OutputWidths {
     let mut widths = OutputWidths {
         interface_name: 0,
         ip_addr: 14,
@@ -368,6 +360,16 @@ fn get_output_widths(interfaces: &[interface_data::InterfaceData]) -> OutputWidt
                 widths.connections = conn.len();
             }
         }
+    }
+
+    if !args.nocolor {
+        widths.interface_name += ColorTokens::TOKENS_LEN;
+        widths.ip_addr += ColorTokens::TOKENS_LEN;
+        widths.status += ColorTokens::TOKENS_LEN;
+        widths.mac += ColorTokens::TOKENS_LEN;
+        widths.ipv6 += ColorTokens::TOKENS_LEN;
+        widths.gateway += ColorTokens::TOKENS_LEN;
+        widths.connections += ColorTokens::TOKENS_LEN;
     }
 
     return widths
