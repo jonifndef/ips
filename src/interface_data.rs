@@ -13,6 +13,32 @@ pub struct InterfaceData {
     pub connections: Vec<String>
 }
 
+pub enum IfcField {
+    NAME,
+    IP,
+    STATUS,
+    MAC,
+    IPV6,
+    GW,
+    CONN
+}
+
+impl InterfaceData {
+    pub fn get(&self, field: &IfcField, linenum: usize) -> &str {
+        let val = match field {
+            IfcField::NAME   => if linenum == 0 { self.interface_name.as_str() } else { "" },
+            IfcField::IP     => if linenum == 0 { self.ip_addr.as_str() } else { "" },
+            IfcField::STATUS => if linenum == 0 { self.status.as_str() } else { "" },
+            IfcField::MAC    => if linenum == 0 { self.mac_addr.as_str() } else { "" },
+            IfcField::IPV6   => if let Some(addr) = self.ipv6_addrs.get(linenum) { addr.as_str() } else { "" },
+            IfcField::GW     => if linenum == 0 { self.gateway.as_str() } else { "" },
+            IfcField::CONN   => if let Some(connection) = self.connections.get(linenum) { connection.as_str() } else { "" },
+        };
+
+        val
+    }
+}
+
 pub fn get_interface_data() -> Vec::<InterfaceData> {
     let mut interface_data = Vec::<InterfaceData>::new();
 

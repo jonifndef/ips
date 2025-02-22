@@ -21,10 +21,10 @@ impl ColorTokens {
     const BLUE: &str = "\x1b[34m";
     const MAGENTA: &str = "\x1b[35m";
     const CYAN: &str = "\x1b[36m";
-    const BRIGHT_RED: &str = "\x1b[91m";
+    //const BRIGHT_RED: &str = "\x1b[91m";
     const BRIGHT_GREEN: &str = "\x1b[92m";
-    const BRIGHT_YELLOW: &str = "\x1b[93m";
-    const BRIGHT_BLUE: &str = "\x1b[94m";
+    //const BRIGHT_YELLOW: &str = "\x1b[93m";
+    //const BRIGHT_BLUE: &str = "\x1b[94m";
     const ENDING: &str = "\x1b[0m";
     const TOKENS_LEN: usize = 9;
 }
@@ -228,7 +228,7 @@ mod tests {
 }
 
 pub fn get_formatted_output(args: crate::Args, mut interfaces: Vec<interface_data::InterfaceData>) -> Vec<String> {
-    let widths = get_output_widths(&interfaces, &args);
+    //let widths = get_output_widths(&interfaces, &args);
 
     if !args.nocolor {
         interfaces = get_colorized_interfaces_data(interfaces);
@@ -244,7 +244,7 @@ pub fn get_formatted_output(args: crate::Args, mut interfaces: Vec<interface_dat
         for line_num in 0..num_lines_for_interface {
             let mut line = String::default();
             for col in &chosen_cols {
-                let data = get_data_for_col(&interface, line_num, col);
+                let data = interface.get(col, line_num);
                 line.push_str(data);
             }
 
@@ -255,21 +255,6 @@ pub fn get_formatted_output(args: crate::Args, mut interfaces: Vec<interface_dat
     }
 
     return lines;
-}
-
-fn get_data_for_col<'a>(interface: &'a interface_data::InterfaceData, linenum: usize, col: &str) -> &'a str {
-    let data: &str = match col {
-        "interface_name" => if linenum == 0 { interface.interface_name.as_str() } else { "" },
-        "ip_addr" => if linenum == 0 { interface.ip_addr.as_str() } else { "" },
-        "status" => if linenum == 0 { interface.status.as_str() } else { "" },
-        "mac_addr" => if linenum == 0 { interface.mac_addr.as_str() } else { "" },
-        "ipv6_addrs" => if let Some(addr) = interface.ipv6_addrs.get(linenum) { addr.as_str() } else { "" },
-        "gateway" => if linenum == 0 { interface.gateway.as_str() } else { "" },
-        "connections" => if let Some(connection) = interface.connections.get(linenum) { connection.as_str() } else { "" },
-        _ => ""
-    };
-
-    data
 }
 
 fn get_colorized_interfaces_data(interfaces: Vec<interface_data::InterfaceData>) -> Vec<interface_data::InterfaceData> {
@@ -296,27 +281,27 @@ fn get_colorized_interfaces_data(interfaces: Vec<interface_data::InterfaceData>)
     ).collect()
 }
 
-fn get_chosen_cols(args: &crate::Args) -> Vec<&str> {
+fn get_chosen_cols(args: &crate::Args) -> Vec<interface_data::IfcField> {
     let mut cols = vec![
-        "interface_name",
-        "ip_addr",
-        "status"
+        interface_data::IfcField::NAME,
+        interface_data::IfcField::IP,
+        interface_data::IfcField::STATUS
     ];
 
     if args.mac {
-        cols.push("mac_addr");
+        cols.push(interface_data::IfcField::MAC);
     }
 
     if args.ipv6 {
-        cols.push("ipv6_addrs");
+        cols.push(interface_data::IfcField::IPV6);
     }
 
     if args.gateway {
-        cols.push("gateway");
+        cols.push(interface_data::IfcField::GW);
     }
 
     if args.connections {
-        cols.push("connections");
+        cols.push(interface_data::IfcField::CONN);
     }
 
     cols
