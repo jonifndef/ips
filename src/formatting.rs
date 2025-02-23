@@ -1,33 +1,5 @@
 use crate::interface_data;
-
-struct OutputWidths {
-    interface_name: usize,
-    ip_addr: usize,
-    status: usize,
-    mac: usize,
-    ipv6: usize,
-    gateway: usize,
-    connections: usize
-}
-
-struct ColorTokens {
-
-}
-
-impl ColorTokens {
-    const RED: &str = "\x1b[31m";
-    const GREEN: &str = "\x1b[32m";
-    const YELLOW: &str = "\x1b[33m";
-    const BLUE: &str = "\x1b[34m";
-    const MAGENTA: &str = "\x1b[35m";
-    const CYAN: &str = "\x1b[36m";
-    //const BRIGHT_RED: &str = "\x1b[91m";
-    const BRIGHT_GREEN: &str = "\x1b[92m";
-    //const BRIGHT_YELLOW: &str = "\x1b[93m";
-    //const BRIGHT_BLUE: &str = "\x1b[94m";
-    const ENDING: &str = "\x1b[0m";
-    const TOKENS_LEN: usize = 9;
-}
+use crate::colors;
 
 #[cfg(test)]
 mod tests {
@@ -228,7 +200,7 @@ mod tests {
 }
 
 pub fn get_formatted_output(args: crate::Args, mut interfaces: Vec<interface_data::InterfaceData>) -> Vec<String> {
-    //let widths = get_output_widths(&interfaces, &args);
+    let widths = interface_data::get_field_widths(&interfaces, &args);
 
     if !args.nocolor {
         interfaces = get_colorized_interfaces_data(interfaces);
@@ -245,7 +217,10 @@ pub fn get_formatted_output(args: crate::Args, mut interfaces: Vec<interface_dat
             let mut line = String::default();
             for col in &chosen_cols {
                 let data = interface.get(col, line_num);
+                println!("data: {}, line_num: {}, col: {:?}", data, line_num, col);
+                let whitespace = widths.get(col) - data.len();
                 line.push_str(data);
+                line.push_str(&format!("{:>width$}", "", width = whitespace));
             }
 
             lines_for_interface.push(line);
@@ -261,19 +236,19 @@ fn get_colorized_interfaces_data(interfaces: Vec<interface_data::InterfaceData>)
     interfaces.into_iter().map(
         |interface| {
             interface_data::InterfaceData {
-                interface_name: format!("{}{}{}", ColorTokens::GREEN, interface.interface_name, ColorTokens::ENDING),
-                ip_addr: format!("{}{}{}", ColorTokens::YELLOW, interface.ip_addr, ColorTokens::ENDING),
-                status: format!("{}{}{}", ColorTokens::RED, interface.status, ColorTokens::ENDING),
-                mac_addr: format!("{}{}{}", ColorTokens::BRIGHT_GREEN, interface.mac_addr, ColorTokens::ENDING),
+                interface_name: format!("{}{}{}", colors::ColorTokens::GREEN, interface.interface_name, colors::ColorTokens::ENDING),
+                ip_addr: format!("{}{}{}", colors::ColorTokens::YELLOW, interface.ip_addr, colors::ColorTokens::ENDING),
+                status: format!("{}{}{}", colors::ColorTokens::RED, interface.status, colors::ColorTokens::ENDING),
+                mac_addr: format!("{}{}{}", colors::ColorTokens::BRIGHT_GREEN, interface.mac_addr, colors::ColorTokens::ENDING),
                 ipv6_addrs: interface.ipv6_addrs.into_iter().map(
                     |ipv6_addr| {
-                        format!("{}{}{}", ColorTokens::CYAN, ipv6_addr, ColorTokens::ENDING)
+                        format!("{}{}{}", colors::ColorTokens::CYAN, ipv6_addr, colors::ColorTokens::ENDING)
                     }
                 ).collect(),
-                gateway: format!("{}{}{}", ColorTokens::MAGENTA, interface.gateway, ColorTokens::ENDING),
+                gateway: format!("{}{}{}", colors::ColorTokens::MAGENTA, interface.gateway, colors::ColorTokens::ENDING),
                 connections: interface.connections.into_iter().map(
                     |connection| {
-                        format!("{}{}{}", ColorTokens::BLUE, connection, ColorTokens::ENDING)
+                        format!("{}{}{}", colors::ColorTokens::BLUE, connection, colors::ColorTokens::ENDING)
                     }
                 ).collect()
             }
@@ -317,51 +292,5 @@ fn get_num_lines(interface_data: &interface_data::InterfaceData) -> usize {
     }
 
     num_lines
-}
-
-fn get_output_widths(interfaces: &[interface_data::InterfaceData], args: &crate::Args) -> OutputWidths {
-    let mut widths = OutputWidths {
-        interface_name: 0,
-        ip_addr: 14,
-        status: 0,
-        mac: 17,
-        ipv6: 0,
-        gateway: 11,
-        connections: 0
-    };
-
-    for interface in interfaces {
-        if interface.interface_name.len() > widths.interface_name {
-            widths.interface_name = interface.interface_name.len();
-        }
-
-        if interface.status.len() > widths.status {
-            widths.status = interface.status.len();
-        }
-
-        for ipv6 in &interface.ipv6_addrs {
-            if ipv6.len() > widths.ipv6 {
-                widths.ipv6 = ipv6.len();
-            }
-        }
-
-        for conn in &interface.connections {
-            if conn.len() > widths.connections {
-                widths.connections = conn.len();
-            }
-        }
-    }
-
-    if !args.nocolor {
-        widths.interface_name += ColorTokens::TOKENS_LEN;
-        widths.ip_addr += ColorTokens::TOKENS_LEN;
-        widths.status += ColorTokens::TOKENS_LEN;
-        widths.mac += ColorTokens::TOKENS_LEN;
-        widths.ipv6 += ColorTokens::TOKENS_LEN;
-        widths.gateway += ColorTokens::TOKENS_LEN;
-        widths.connections += ColorTokens::TOKENS_LEN;
-    }
-
-    return widths
 }
 

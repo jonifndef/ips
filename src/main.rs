@@ -2,6 +2,7 @@ use clap::Parser;
 
 mod interface_data;
 mod formatting;
+mod colors;
 
 /// Application that prints your network interfaces with associated information, such as ipv4 address, status etc
 #[derive(Parser, Debug)]

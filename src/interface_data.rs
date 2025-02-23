@@ -2,6 +2,8 @@ use pnet::datalink;
 use pnet::ipnetwork::IpNetwork;
 use std::process::{Command, Stdio};
 
+use crate::colors;
+
 #[derive(Default, Debug)]
 pub struct InterfaceData {
     pub interface_name: String,
@@ -13,6 +15,17 @@ pub struct InterfaceData {
     pub connections: Vec<String>
 }
 
+pub struct FieldWidths {
+    pub interface_name: usize,
+    pub ip_addr: usize,
+    pub status: usize,
+    pub mac: usize,
+    pub ipv6: usize,
+    pub gateway: usize,
+    pub connections: usize
+}
+
+#[derive(Debug)]
 pub enum IfcField {
     NAME,
     IP,
@@ -33,6 +46,22 @@ impl InterfaceData {
             IfcField::IPV6   => if let Some(addr) = self.ipv6_addrs.get(linenum) { addr.as_str() } else { "" },
             IfcField::GW     => if linenum == 0 { self.gateway.as_str() } else { "" },
             IfcField::CONN   => if let Some(connection) = self.connections.get(linenum) { connection.as_str() } else { "" },
+        };
+
+        val
+    }
+}
+
+impl FieldWidths {
+    pub fn get(&self, field: &IfcField) -> usize {
+        let val = match field {
+            IfcField::NAME   => self.interface_name,
+            IfcField::IP     => self.ip_addr,
+            IfcField::STATUS => self.status,
+            IfcField::MAC    => self.mac,
+            IfcField::IPV6   => self.ipv6,
+            IfcField::GW     => self.gateway,
+            IfcField::CONN   => self.connections,
         };
 
         val
@@ -76,6 +105,52 @@ pub fn get_interface_data() -> Vec::<InterfaceData> {
     }
 
     interface_data
+}
+
+pub fn get_field_widths(interfaces: &[InterfaceData], args: &crate::Args) -> FieldWidths {
+    let mut widths = FieldWidths {
+        interface_name: 0,
+        ip_addr: 15,
+        status: 0,
+        mac: 18,
+        ipv6: 0,
+        gateway: 12,
+        connections: 0
+    };
+
+    for interface in interfaces {
+        if interface.interface_name.len() > widths.interface_name {
+            widths.interface_name = interface.interface_name.len() + 1;
+        }
+
+        if interface.status.len() > widths.status {
+            widths.status = interface.status.len() + 1;
+        }
+
+        for ipv6 in &interface.ipv6_addrs {
+            if ipv6.len() > widths.ipv6 {
+                widths.ipv6 = ipv6.len() + 1;
+            }
+        }
+
+        for conn in &interface.connections {
+            if conn.len() > widths.connections {
+                widths.connections = conn.len() + 1;
+            }
+        }
+    }
+
+    if !args.nocolor {
+        widths.interface_name += colors::ColorTokens::TOKENS_LEN;
+        widths.ip_addr += colors::ColorTokens::TOKENS_LEN;
+        widths.status += colors::ColorTokens::TOKENS_LEN;
+        widths.mac += colors::ColorTokens::TOKENS_LEN;
+        widths.ipv6 += colors::ColorTokens::TOKENS_LEN;
+        widths.gateway += colors::ColorTokens::TOKENS_LEN;
+        widths.connections += colors::ColorTokens::TOKENS_LEN;
+    }
+
+    return widths
 }
 
 // TODO: Use crate that allows usage of a single line-formatted command
