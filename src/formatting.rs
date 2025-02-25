@@ -217,10 +217,19 @@ pub fn get_formatted_output(args: crate::Args, mut interfaces: Vec<interface_dat
             let mut line = String::default();
             for col in &chosen_cols {
                 let data = interface.get(col, line_num);
-                println!("data: {}, line_num: {}, col: {:?}", data, line_num, col);
                 let whitespace = widths.get(col) - data.len();
                 line.push_str(data);
-                line.push_str(&format!("{:>width$}", "", width = whitespace));
+                line.push_str(
+                    &format!(
+                        "{:>width$}",
+                        "",
+                        width = if data == "" && !args.nocolor {
+                            whitespace - colors::ColorTokens::TOKENS_LEN
+                        } else {
+                            whitespace
+                        }
+                    )
+                );
             }
 
             lines_for_interface.push(line);
