@@ -1,6 +1,6 @@
 use pnet::datalink;
 use pnet::ipnetwork::IpNetwork;
-use std::process::{Command, Stdio};
+use duct::cmd;
 
 use crate::colors;
 
@@ -156,109 +156,22 @@ pub fn get_field_widths(interfaces: &[InterfaceData], args: &crate::Args) -> Fie
 // TODO: Use crate that allows usage of a single line-formatted command
 fn get_gateway(interface: &datalink::NetworkInterface, data: &mut InterfaceData) {
     // route -n | grep 'UG[ \t]' | grep 'wlp2s0' | awk '{print $2}'
-    let route_child = match Command::new("route")
-        .arg("-n")
-        .stdout(Stdio::piped())
-        .spawn() {
-        Ok(route_child) => route_child,
-        Err(_) => { return; }
-    };
-
-    let route_out = match route_child.stdout {
-        Some(route_out) => route_out,
-        None => { return; }
-    };
-
-    let gw_grep_child = match Command::new("grep")
-        .arg("UG[ \\t]")
-        .stdin(Stdio::from(route_out))
-        .stdout(Stdio::piped())
-        .spawn() {
-        Ok(gw_grep_child) => gw_grep_child,
-        Err(_) => { return; }
-    };
-
-    let gw_grep_out = match gw_grep_child.stdout {
-        Some(gw_grep_out) => gw_grep_out,
-        None => { return; }
-    };
-
-    let ifc_grep_child = match Command::new("grep")
-        .arg(&interface.name)
-        .stdin(Stdio::from(gw_grep_out))
-        .stdout(Stdio::piped())
-        .spawn() {
-        Ok(ifc_grep_child) => ifc_grep_child,
-        Err(_) => { return; }
-    };
-
-    let ifc_grep_out = match ifc_grep_child.stdout {
-        Some(ifc_grep_out) => ifc_grep_out,
-        None => { return; }
-    };
-
-    let awk_child = match Command::new("awk")
-        .arg("{print $2}")
-        .stdin(Stdio::from(ifc_grep_out))
-        .stdout(Stdio::piped())
-        .spawn() {
-        Ok(awk_child) => awk_child,
-        Err(_) => { return; }
-    };
-
-
-    let output = awk_child.wait_with_output().expect("Failed to wait on sed");
-
-    if let Ok(out_str) = String::from_utf8(output.stdout) {
-        let trimmed_out_str = out_str.trim_end();
-        data.gateway = trimmed_out_str.to_string();
+    if let Ok(output) = cmd!("route", "-n")
+        .pipe(cmd!("grep", "UG[ \t]"))
+        .pipe(cmd!("grep", &interface.name))
+        .pipe(cmd!("awk", "{print $2}"))
+        .read() {
+        data.gateway = output.trim().to_string();
     }
 }
 
 fn get_connections(interface: &datalink::NetworkInterface, data: &mut InterfaceData) {
     // nmcli -t con show | grep "wlp2s0" | awk -F: '{print $1}'
-    // TODO: What if there are multiple connections using this interface?
-    let nmcli_child = match Command::new("nmcli")
-        .args(["-t", "con", "show"])
-        .stdout(Stdio::piped())
-        .spawn() {
-        Ok(nmcli_child) => nmcli_child,
-        Err(_) => { return; }
-    };
-
-    let nmcli_out = match nmcli_child.stdout {
-        Some(nmcli_out) => nmcli_out,
-        None => { println!("None nmcli_out"); return; }
-    };
-
-    let grep_child = match Command::new("grep")
-        .arg(&interface.name)
-        .stdin(Stdio::from(nmcli_out))
-        .stdout(Stdio::piped())
-        .spawn() {
-        Ok(grep_child) => grep_child,
-        Err(_) => { return; }
-    };
-
-    let grep_out = match grep_child.stdout {
-        Some(grep_out) => grep_out,
-        None => { println!("None grep_out"); return; }
-    };
-
-    let awk_child = match Command::new("awk")
-        .args(["-F:", "{print $1}"])
-        .stdin(Stdio::from(grep_out))
-        .stdout(Stdio::piped())
-        .spawn() {
-        Ok(awk_child) => awk_child,
-        Err(_) => { return; }
-    };
-
-    let output = awk_child.wait_with_output().expect("Failed to wait on sed");
-
-    if let Ok(out_str) = String::from_utf8(output.stdout) {
-        let trimmed_out_str = out_str.trim_end();
+    if let Ok(output) = cmd!("nmcli", "-t", "con", "show")
+        .pipe(cmd!("grep", &interface.name))
+        .pipe(cmd!("awk", "-F:", "{print $1}"))
+        .read() {
+        let trimmed_out_str = output.trim_end();
         data.connections.push(trimmed_out_str.to_string());
     }
 }
-

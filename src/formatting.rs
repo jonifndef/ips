@@ -5,6 +5,12 @@ use crate::colors;
 mod tests {
     use super::*;
 
+    // TODO: Add test for this command:
+    // cargo run -- -m -c
+    // we get a blank line after the first line, even though we are not printing the ipv6
+    // addrs, I assume this is the culprit since this should (?) be the only field that gives us
+    // multiple lines in this command
+
     #[test]
     fn test_formatting_ipv6() {
         let args = crate::Args {
