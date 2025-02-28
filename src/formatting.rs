@@ -12,7 +12,7 @@ mod tests {
     // multiple lines in this command
 
     #[test]
-    fn test_formatting_ipv6() {
+    fn test_one_formatting_ipv6() {
         let args = crate::Args {
             mac: false,
             ipv6: true,
@@ -65,15 +65,15 @@ mod tests {
 
         let output = get_formatted_output(args, interfaces);
 
-        assert!(output[0].len() == 124);
-        assert!(output[1].len() == 97);
-        assert!(output[2].len() == 97);
-        assert!(output[3].len() == 124);
-        assert!(output[4].len() == 97);
-        assert!(output[5].len() == 97);
-        assert!(output[6].len() == 124);
-        assert!(output[7].len() == 97);
-        assert!(output[8].len() == 97);
+        assert!(output[0].len() == 125);
+        assert!(output[1].len() == 98);
+        assert!(output[2].len() == 98);
+        assert!(output[3].len() == 125);
+        assert!(output[4].len() == 98);
+        assert!(output[5].len() == 98);
+        assert!(output[6].len() == 125);
+        assert!(output[7].len() == 98);
+        assert!(output[8].len() == 98);
     }
 
     #[test]
@@ -136,15 +136,15 @@ mod tests {
 
         let output = get_formatted_output(args, interfaces);
 
-        assert!(output[0].len() == 142);
-        assert!(output[1].len() == 115);
-        assert!(output[2].len() == 115);
-        assert!(output[3].len() == 133);
-        assert!(output[4].len() == 106);
-        assert!(output[5].len() == 106);
-        assert!(output[6].len() == 142);
-        assert!(output[7].len() == 106);
-        assert!(output[8].len() == 106);
+        assert!(output[0].len() == 143);
+        assert!(output[1].len() == 116);
+        assert!(output[2].len() == 116);
+        assert!(output[3].len() == 134);
+        assert!(output[4].len() == 107);
+        assert!(output[5].len() == 107);
+        assert!(output[6].len() == 143);
+        assert!(output[7].len() == 107);
+        assert!(output[8].len() == 107);
     }
 
     #[test]
@@ -198,10 +198,10 @@ mod tests {
 
         let output = get_formatted_output(args, interfaces);
 
-        assert!(output[0].len() == 169);
-        assert!(output[1].len() == 105);
-        assert!(output[2].len() == 160);
-        assert!(output[3].len() == 160);
+        assert!(output[0].len() == 179);
+        assert!(output[1].len() == 125);
+        assert!(output[2].len() == 170);
+        assert!(output[3].len() == 170);
     }
 }
 

@@ -112,9 +112,9 @@ pub fn get_field_widths(interfaces: &[InterfaceData], args: &crate::Args) -> Fie
         interface_name: 0,
         ip_addr: 15,
         status: 0,
-        mac: 18,
+        mac: 0,
         ipv6: 0,
-        gateway: 12,
+        gateway: 0,
         connections: 0
     };
 
@@ -127,10 +127,18 @@ pub fn get_field_widths(interfaces: &[InterfaceData], args: &crate::Args) -> Fie
             widths.status = interface.status.len() + 1;
         }
 
+        if interface.mac_addr.len() > widths.mac {
+            widths.mac = interface.mac_addr.len() + 1;
+        }
+
         for ipv6 in &interface.ipv6_addrs {
             if ipv6.len() > widths.ipv6 {
                 widths.ipv6 = ipv6.len() + 1;
             }
+        }
+
+        if interface.gateway.len() > widths.gateway {
+            widths.gateway = interface.gateway.len() + 1;
         }
 
         for conn in &interface.connections {
