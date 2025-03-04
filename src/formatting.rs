@@ -223,7 +223,8 @@ pub fn get_formatted_output(args: crate::Args, mut interfaces: Vec<interface_dat
             let mut line = String::default();
             for col in &chosen_cols {
                 let data = interface.get(col, line_num);
-                let whitespace = widths.get(col) - data.len();
+                let col_width = widths.get(col).unwrap();
+                let whitespace = col_width - data.len();
                 line.push_str(data);
                 line.push_str(
                     &format!(

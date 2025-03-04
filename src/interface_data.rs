@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use pnet::datalink;
 use pnet::ipnetwork::IpNetwork;
 use duct::cmd;
@@ -15,17 +17,7 @@ pub struct InterfaceData {
     pub connections: Vec<String>
 }
 
-pub struct FieldWidths {
-    pub interface_name: usize,
-    pub ip_addr: usize,
-    pub status: usize,
-    pub mac: usize,
-    pub ipv6: usize,
-    pub gateway: usize,
-    pub connections: usize
-}
-
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Hash)]
 pub enum IfcField {
     NAME,
     IP,
@@ -35,6 +27,10 @@ pub enum IfcField {
     GW,
     CONN
 }
+
+//impl Hash for IfcField {
+//
+//}
 
 impl InterfaceData {
     pub fn get(&self, field: &IfcField, linenum: usize) -> &str {
@@ -46,22 +42,6 @@ impl InterfaceData {
             IfcField::IPV6   => if let Some(addr) = self.ipv6_addrs.get(linenum) { addr.as_str() } else { "" },
             IfcField::GW     => if linenum == 0 { self.gateway.as_str() } else { "" },
             IfcField::CONN   => if let Some(connection) = self.connections.get(linenum) { connection.as_str() } else { "" },
-        };
-
-        val
-    }
-}
-
-impl FieldWidths {
-    pub fn get(&self, field: &IfcField) -> usize {
-        let val = match field {
-            IfcField::NAME   => self.interface_name,
-            IfcField::IP     => self.ip_addr,
-            IfcField::STATUS => self.status,
-            IfcField::MAC    => self.mac,
-            IfcField::IPV6   => self.ipv6,
-            IfcField::GW     => self.gateway,
-            IfcField::CONN   => self.connections,
         };
 
         val
@@ -107,61 +87,86 @@ pub fn get_interface_data() -> Vec::<InterfaceData> {
     interface_data
 }
 
-pub fn get_field_widths(interfaces: &[InterfaceData], args: &crate::Args) -> FieldWidths {
-    let mut widths = FieldWidths {
-        interface_name: 0,
-        ip_addr: 15,
-        status: 0,
-        mac: 0,
-        ipv6: 0,
-        gateway: 0,
-        connections: 0
-    };
+pub fn get_field_widths(interfaces: &[InterfaceData], args: &crate::Args) -> HashMap<IfcField, usize> {
+    let mut widths = HashMap::new();
+
+    widths.insert(IfcField::NAME, 0);
+    widths.insert(IfcField::IP, 15);
+    widths.insert(IfcField::STATUS, 0);
+    widths.insert(IfcField::MAC, 0);
+    widths.insert(IfcField::IPV6, 0);
+    widths.insert(IfcField::GW, 0);
+    widths.insert(IfcField::CONN, 0);
 
     for interface in interfaces {
-        if interface.interface_name.len() > widths.interface_name {
-            widths.interface_name = interface.interface_name.len() + 1;
-        }
-
-        if interface.status.len() > widths.status {
-            widths.status = interface.status.len() + 1;
-        }
-
-        if interface.mac_addr.len() > widths.mac {
-            widths.mac = interface.mac_addr.len() + 1;
-        }
-
-        for ipv6 in &interface.ipv6_addrs {
-            if ipv6.len() > widths.ipv6 {
-                widths.ipv6 = ipv6.len() + 1;
+        if let Some(width) = widths.get_mut(&IfcField::NAME) {
+            if interface.interface_name.len() > *width {
+                *width = interface.interface_name.len() + 1;
             }
         }
 
-        if interface.gateway.len() > widths.gateway {
-            widths.gateway = interface.gateway.len() + 1;
+        if let Some(width) = widths.get_mut(&IfcField::STATUS) {
+            if interface.status.len() > *width {
+                *width = interface.status.len() + 1;
+            }
+        }
+
+        if let Some(width) = widths.get_mut(&IfcField::MAC) {
+            if interface.mac_addr.len() > *width {
+                *width = interface.mac_addr.len() + 1;
+            }
+        }
+
+        for ipv6 in &interface.ipv6_addrs {
+            if let Some(width) = widths.get_mut(&IfcField::IPV6) {
+                if ipv6.len() > *width {
+                    *width = ipv6.len() + 1;
+                }
+            }
+        }
+
+        if let Some(width) = widths.get_mut(&IfcField::GW) {
+            if interface.gateway.len() > *width {
+                *width = interface.gateway.len() + 1;
+            }
         }
 
         for conn in &interface.connections {
-            if conn.len() > widths.connections {
-                widths.connections = conn.len() + 1;
+            if let Some(width) = widths.get_mut(&IfcField::CONN) {
+                if conn.len() > *width {
+                    *width = conn.len() + 1;
+                }
             }
         }
     }
 
     if !args.nocolor {
-        widths.interface_name += colors::ColorTokens::TOKENS_LEN;
-        widths.ip_addr += colors::ColorTokens::TOKENS_LEN;
-        widths.status += colors::ColorTokens::TOKENS_LEN;
-        widths.mac += colors::ColorTokens::TOKENS_LEN;
-        widths.ipv6 += colors::ColorTokens::TOKENS_LEN;
-        widths.gateway += colors::ColorTokens::TOKENS_LEN;
-        widths.connections += colors::ColorTokens::TOKENS_LEN;
+        if let Some(width) = widths.get_mut(&IfcField::NAME) {
+            *width += colors::ColorTokens::TOKENS_LEN;
+        }
+        if let Some(width) = widths.get_mut(&IfcField::IP) {
+            *width += colors::ColorTokens::TOKENS_LEN;
+        }
+        if let Some(width) = widths.get_mut(&IfcField::STATUS) {
+            *width += colors::ColorTokens::TOKENS_LEN;
+        }
+        if let Some(width) = widths.get_mut(&IfcField::MAC) {
+            *width += colors::ColorTokens::TOKENS_LEN;
+        }
+        if let Some(width) = widths.get_mut(&IfcField::IPV6) {
+            *width += colors::ColorTokens::TOKENS_LEN;
+        }
+        if let Some(width) = widths.get_mut(&IfcField::GW) {
+            *width += colors::ColorTokens::TOKENS_LEN;
+        }
+        if let Some(width) = widths.get_mut(&IfcField::CONN) {
+            *width += colors::ColorTokens::TOKENS_LEN;
+        }
     }
 
-    return widths
+    widths
 }
 
-// TODO: Use crate that allows usage of a single line-formatted command
 fn get_gateway(interface: &datalink::NetworkInterface, data: &mut InterfaceData) {
     // route -n | grep 'UG[ \t]' | grep 'wlp2s0' | awk '{print $2}'
     if let Ok(output) = cmd!("route", "-n")
