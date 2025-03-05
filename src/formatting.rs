@@ -5,11 +5,113 @@ use crate::colors;
 mod tests {
     use super::*;
 
-    // TODO: Add test for this command:
-    // cargo run -- -m -c
-    // we get a blank line after the first line, even though we are not printing the ipv6
-    // addrs, I assume this is the culprit since this should (?) be the only field that gives us
-    // multiple lines in this command
+    #[test]
+    fn test_mac() {
+        let args = crate::Args {
+            mac: true,
+            ipv6: false,
+            gateway: false,
+            connections: false,
+            nocolor: false
+        };
+
+        let interfaces = vec![
+            interface_data::InterfaceData {
+                interface_name: String::from("ollebolle"),
+                ip_addr: String::from("192.168.1.2/24"),
+                mac_addr: String::from("AA:BB:CC:DD:EE:FF"),
+                status: String::from("UP"),
+                ipv6_addrs: vec![
+                    String::from("fdaa:bbcc:ddee:0:9347:deb9:2fa3:82a3/64"),
+                    String::from("fe80::5fa:c189:2ae:94a2/64"),
+                ],
+                gateway: String::from(""),
+                connections: vec![
+                    String::from("my_connection_yao")
+                ]
+            },
+            interface_data::InterfaceData {
+                interface_name: String::from("ollebolle_the_second"),
+                ip_addr: String::from("192.168.1.3/24"),
+                mac_addr: String::from("00:11:22:33:44:55"),
+                status: String::from("UP"),
+                ipv6_addrs: vec![],
+                gateway: String::from(""),
+                connections: vec![
+                    String::from("another_connection_yao")
+                ]
+            },
+            interface_data::InterfaceData {
+                interface_name: String::from("ollebolle_yo"),
+                ip_addr: String::from("192.168.1.4/24"),
+                mac_addr: String::from("C0:FF:EE:BA:BE:00"),
+                status: String::from("UP"),
+                ipv6_addrs: vec![],
+                gateway: String::from(""),
+                connections: vec![
+                    String::from("another_connection_yao")
+                ]
+            }
+        ];
+
+        let output = get_formatted_output(args, interfaces);
+
+        assert!(output.len() == 3);
+    }
+
+    #[test]
+    fn test_mac_and_connections() {
+        let args = crate::Args {
+            mac: true,
+            ipv6: false,
+            gateway: false,
+            connections: true,
+            nocolor: false
+        };
+
+        let interfaces = vec![
+            interface_data::InterfaceData {
+                interface_name: String::from("ollebolle"),
+                ip_addr: String::from("192.168.1.2/24"),
+                mac_addr: String::from("AA:BB:CC:DD:EE:FF"),
+                status: String::from("UP"),
+                ipv6_addrs: vec![
+                    String::from("fdaa:bbcc:ddee:0:9347:deb9:2fa3:82a3/64"),
+                    String::from("fe80::5fa:c189:2ae:94a2/64"),
+                ],
+                gateway: String::from(""),
+                connections: vec![
+                    String::from("my_connection_yao")
+                ]
+            },
+            interface_data::InterfaceData {
+                interface_name: String::from("ollebolle_the_second"),
+                ip_addr: String::from("192.168.1.3/24"),
+                mac_addr: String::from("00:11:22:33:44:55"),
+                status: String::from("UP"),
+                ipv6_addrs: vec![],
+                gateway: String::from(""),
+                connections: vec![
+                    String::from("another_connection_yao")
+                ]
+            },
+            interface_data::InterfaceData {
+                interface_name: String::from("ollebolle_yo"),
+                ip_addr: String::from("192.168.1.4/24"),
+                mac_addr: String::from("C0:FF:EE:BA:BE:00"),
+                status: String::from("UP"),
+                ipv6_addrs: vec![],
+                gateway: String::from(""),
+                connections: vec![
+                    String::from("another_connection_yao")
+                ]
+            }
+        ];
+
+        let output = get_formatted_output(args, interfaces);
+
+        assert!(output.len() == 3);
+    }
 
     #[test]
     fn test_one_formatting_ipv6() {
