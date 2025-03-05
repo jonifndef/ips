@@ -318,7 +318,7 @@ pub fn get_formatted_output(args: crate::Args, mut interfaces: Vec<interface_dat
     let mut lines: Vec<String> = vec![];
 
     for interface in interfaces {
-        let num_lines_for_interface = get_num_lines(&interface);
+        let num_lines_for_interface = get_num_lines(&interface, &args);
         let mut lines_for_interface: Vec<String> = vec![];
 
         for line_num in 0..num_lines_for_interface {
@@ -400,13 +400,18 @@ fn get_chosen_cols(args: &crate::Args) -> Vec<interface_data::IfcField> {
     cols
 }
 
-fn get_num_lines(interface_data: &interface_data::InterfaceData) -> usize {
-    let mut num_lines = 0;
-    if interface_data.ipv6_addrs.len() > num_lines {
-        num_lines = interface_data.ipv6_addrs.len();
+fn get_num_lines(interface_data: &interface_data::InterfaceData, args: &crate::Args) -> usize {
+    let mut num_lines = 1;
+    if args.ipv6 {
+        if interface_data.ipv6_addrs.len() > num_lines {
+            num_lines = interface_data.ipv6_addrs.len();
+        }
     }
-    if interface_data.connections.len() > num_lines {
-        num_lines = interface_data.connections.len();
+
+    if args.connections {
+        if interface_data.connections.len() > num_lines {
+            num_lines = interface_data.connections.len();
+        }
     }
 
     num_lines
