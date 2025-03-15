@@ -332,7 +332,7 @@ pub fn get_formatted_output(args: crate::Args, mut interfaces: Vec<interface_dat
                     &format!(
                         "{:>width$}",
                         "",
-                        width = if data == "" && !args.nocolor {
+                        width = if data.is_empty() && !args.nocolor {
                             whitespace - colors::ColorTokens::TOKENS_LEN
                         } else {
                             whitespace
@@ -347,7 +347,7 @@ pub fn get_formatted_output(args: crate::Args, mut interfaces: Vec<interface_dat
         lines.append(&mut lines_for_interface);
     }
 
-    return lines;
+    lines
 }
 
 fn get_colorized_interfaces_data(interfaces: Vec<interface_data::InterfaceData>) -> Vec<interface_data::InterfaceData> {
@@ -376,25 +376,25 @@ fn get_colorized_interfaces_data(interfaces: Vec<interface_data::InterfaceData>)
 
 fn get_chosen_cols(args: &crate::Args) -> Vec<interface_data::IfcField> {
     let mut cols = vec![
-        interface_data::IfcField::NAME,
-        interface_data::IfcField::IP,
-        interface_data::IfcField::STATUS
+        interface_data::IfcField::Name,
+        interface_data::IfcField::Ip,
+        interface_data::IfcField::Status
     ];
 
     if args.mac {
-        cols.push(interface_data::IfcField::MAC);
+        cols.push(interface_data::IfcField::Mac);
     }
 
     if args.ipv6 {
-        cols.push(interface_data::IfcField::IPV6);
+        cols.push(interface_data::IfcField::Ipv6);
     }
 
     if args.gateway {
-        cols.push(interface_data::IfcField::GW);
+        cols.push(interface_data::IfcField::Gw);
     }
 
     if args.connections {
-        cols.push(interface_data::IfcField::CONN);
+        cols.push(interface_data::IfcField::Conn);
     }
 
     cols
@@ -402,16 +402,12 @@ fn get_chosen_cols(args: &crate::Args) -> Vec<interface_data::IfcField> {
 
 fn get_num_lines(interface_data: &interface_data::InterfaceData, args: &crate::Args) -> usize {
     let mut num_lines = 1;
-    if args.ipv6 {
-        if interface_data.ipv6_addrs.len() > num_lines {
-            num_lines = interface_data.ipv6_addrs.len();
-        }
+    if args.ipv6 && interface_data.ipv6_addrs.len() > num_lines {
+        num_lines = interface_data.ipv6_addrs.len();
     }
 
-    if args.connections {
-        if interface_data.connections.len() > num_lines {
-            num_lines = interface_data.connections.len();
-        }
+    if args.connections && interface_data.connections.len() > num_lines {
+        num_lines = interface_data.connections.len();
     }
 
     num_lines

@@ -19,13 +19,13 @@ pub struct InterfaceData {
 
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub enum IfcField {
-    NAME,
-    IP,
-    STATUS,
-    MAC,
-    IPV6,
-    GW,
-    CONN
+    Name,
+    Ip,
+    Status,
+    Mac,
+    Ipv6,
+    Gw,
+    Conn
 }
 
 //impl Hash for IfcField {
@@ -35,13 +35,13 @@ pub enum IfcField {
 impl InterfaceData {
     pub fn get(&self, field: &IfcField, linenum: usize) -> &str {
         let val = match field {
-            IfcField::NAME   => if linenum == 0 { self.interface_name.as_str() } else { "" },
-            IfcField::IP     => if linenum == 0 { self.ip_addr.as_str() } else { "" },
-            IfcField::STATUS => if linenum == 0 { self.status.as_str() } else { "" },
-            IfcField::MAC    => if linenum == 0 { self.mac_addr.as_str() } else { "" },
-            IfcField::IPV6   => if let Some(addr) = self.ipv6_addrs.get(linenum) { addr.as_str() } else { "" },
-            IfcField::GW     => if linenum == 0 { self.gateway.as_str() } else { "" },
-            IfcField::CONN   => if let Some(connection) = self.connections.get(linenum) { connection.as_str() } else { "" },
+            IfcField::Name   => if linenum == 0 { self.interface_name.as_str() } else { "" },
+            IfcField::Ip     => if linenum == 0 { self.ip_addr.as_str() } else { "" },
+            IfcField::Status => if linenum == 0 { self.status.as_str() } else { "" },
+            IfcField::Mac    => if linenum == 0 { self.mac_addr.as_str() } else { "" },
+            IfcField::Ipv6   => if let Some(addr) = self.ipv6_addrs.get(linenum) { addr.as_str() } else { "" },
+            IfcField::Gw     => if linenum == 0 { self.gateway.as_str() } else { "" },
+            IfcField::Conn   => if let Some(connection) = self.connections.get(linenum) { connection.as_str() } else { "" },
         };
 
         val
@@ -58,10 +58,11 @@ pub fn get_interface_data() -> Vec::<InterfaceData> {
             continue;
         }
 
-        let mut data = InterfaceData::default();
-
-        data.status = String::from(if interface.is_up() { "UP" } else { "DOWN" });
-        data.interface_name = interface.name.clone();
+        let mut data = InterfaceData {
+            interface_name: interface.name.clone(),
+            status: String::from(if interface.is_up() { "UP" } else { "DOWN" }),
+            ..Default::default()
+        };
 
         for ip in interface.ips.iter() {
             match ip {
@@ -90,49 +91,49 @@ pub fn get_interface_data() -> Vec::<InterfaceData> {
 pub fn get_field_widths(interfaces: &[InterfaceData], args: &crate::Args) -> HashMap<IfcField, usize> {
     let mut widths = HashMap::new();
 
-    widths.insert(IfcField::NAME, 0);
-    widths.insert(IfcField::IP, 15);
-    widths.insert(IfcField::STATUS, 0);
-    widths.insert(IfcField::MAC, 0);
-    widths.insert(IfcField::IPV6, 0);
-    widths.insert(IfcField::GW, 0);
-    widths.insert(IfcField::CONN, 0);
+    widths.insert(IfcField::Name, 0);
+    widths.insert(IfcField::Ip, 15);
+    widths.insert(IfcField::Status, 0);
+    widths.insert(IfcField::Mac, 0);
+    widths.insert(IfcField::Ipv6, 0);
+    widths.insert(IfcField::Gw, 0);
+    widths.insert(IfcField::Conn, 0);
 
     for interface in interfaces {
-        if let Some(width) = widths.get_mut(&IfcField::NAME) {
+        if let Some(width) = widths.get_mut(&IfcField::Name) {
             if interface.interface_name.len() > *width {
                 *width = interface.interface_name.len() + 1;
             }
         }
 
-        if let Some(width) = widths.get_mut(&IfcField::STATUS) {
+        if let Some(width) = widths.get_mut(&IfcField::Status) {
             if interface.status.len() > *width {
                 *width = interface.status.len() + 1;
             }
         }
 
-        if let Some(width) = widths.get_mut(&IfcField::MAC) {
+        if let Some(width) = widths.get_mut(&IfcField::Mac) {
             if interface.mac_addr.len() > *width {
                 *width = interface.mac_addr.len() + 1;
             }
         }
 
         for ipv6 in &interface.ipv6_addrs {
-            if let Some(width) = widths.get_mut(&IfcField::IPV6) {
+            if let Some(width) = widths.get_mut(&IfcField::Ipv6) {
                 if ipv6.len() > *width {
                     *width = ipv6.len() + 1;
                 }
             }
         }
 
-        if let Some(width) = widths.get_mut(&IfcField::GW) {
+        if let Some(width) = widths.get_mut(&IfcField::Gw) {
             if interface.gateway.len() > *width {
                 *width = interface.gateway.len() + 1;
             }
         }
 
         for conn in &interface.connections {
-            if let Some(width) = widths.get_mut(&IfcField::CONN) {
+            if let Some(width) = widths.get_mut(&IfcField::Conn) {
                 if conn.len() > *width {
                     *width = conn.len() + 1;
                 }
@@ -141,25 +142,25 @@ pub fn get_field_widths(interfaces: &[InterfaceData], args: &crate::Args) -> Has
     }
 
     if !args.nocolor {
-        if let Some(width) = widths.get_mut(&IfcField::NAME) {
+        if let Some(width) = widths.get_mut(&IfcField::Name) {
             *width += colors::ColorTokens::TOKENS_LEN;
         }
-        if let Some(width) = widths.get_mut(&IfcField::IP) {
+        if let Some(width) = widths.get_mut(&IfcField::Ip) {
             *width += colors::ColorTokens::TOKENS_LEN;
         }
-        if let Some(width) = widths.get_mut(&IfcField::STATUS) {
+        if let Some(width) = widths.get_mut(&IfcField::Status) {
             *width += colors::ColorTokens::TOKENS_LEN;
         }
-        if let Some(width) = widths.get_mut(&IfcField::MAC) {
+        if let Some(width) = widths.get_mut(&IfcField::Mac) {
             *width += colors::ColorTokens::TOKENS_LEN;
         }
-        if let Some(width) = widths.get_mut(&IfcField::IPV6) {
+        if let Some(width) = widths.get_mut(&IfcField::Ipv6) {
             *width += colors::ColorTokens::TOKENS_LEN;
         }
-        if let Some(width) = widths.get_mut(&IfcField::GW) {
+        if let Some(width) = widths.get_mut(&IfcField::Gw) {
             *width += colors::ColorTokens::TOKENS_LEN;
         }
-        if let Some(width) = widths.get_mut(&IfcField::CONN) {
+        if let Some(width) = widths.get_mut(&IfcField::Conn) {
             *width += colors::ColorTokens::TOKENS_LEN;
         }
     }
