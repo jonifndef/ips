@@ -1,6 +1,88 @@
 use super::*;
 
 #[test]
+fn test_single_ifc_without_ip() {
+    let args = crate::Args {
+        mac: true,
+        ipv6: false,
+        gateway: false,
+        connections: false,
+        nocolor: false
+    };
+
+    let interfaces = vec![
+        interface_data::InterfaceData {
+            interface_name: String::from("ollebolle"),
+            ip_addr: String::from(""),
+            mac_addr: String::from("AA:BB:CC:DD:EE:FF"),
+            status: String::from("DOWN"),
+            ipv6_addrs: vec![],
+            gateway: String::from(""),
+            connections: vec![]
+        }
+    ];
+
+    let output = get_formatted_output(args, interfaces);
+
+    assert!(output.len() == 1);
+    assert!(output[0].len() == 69);
+}
+
+#[test]
+fn test_multiple_without_ip() {
+    let args = crate::Args {
+        mac: true,
+        ipv6: false,
+        gateway: false,
+        connections: false,
+        nocolor: false
+    };
+
+    let interfaces = vec![
+        interface_data::InterfaceData {
+            interface_name: String::from("ollebolle"),
+            ip_addr: String::from(""),
+            mac_addr: String::from("AA:BB:CC:DD:EE:FF"),
+            status: String::from("DOWN"),
+            ipv6_addrs: vec![],
+            gateway: String::from(""),
+            connections: vec![
+                String::from("my_connection_yao")
+            ]
+        },
+        interface_data::InterfaceData {
+            interface_name: String::from("ollebolle_the_second"),
+            ip_addr: String::from("192.168.1.3/24"),
+            mac_addr: String::from("00:11:22:33:44:55"),
+            status: String::from("UP"),
+            ipv6_addrs: vec![],
+            gateway: String::from(""),
+            connections: vec![
+                String::from("another_connection_yao")
+            ]
+        },
+        interface_data::InterfaceData {
+            interface_name: String::from("ollebolle_yo"),
+            ip_addr: String::from("192.168.1.4/24"),
+            mac_addr: String::from("C0:FF:EE:BA:BE:00"),
+            status: String::from("DOWN"),
+            ipv6_addrs: vec![],
+            gateway: String::from(""),
+            connections: vec![
+                String::from("another_connection_yao")
+            ]
+        }
+    ];
+
+    let output = get_formatted_output(args, interfaces);
+
+    assert!(output.len() == 3);
+    assert!(output[0].len() == 95);
+    assert!(output[1].len() == 95);
+    assert!(output[2].len() == 95);
+}
+
+#[test]
 fn test_mac() {
     let args = crate::Args {
         mac: true,

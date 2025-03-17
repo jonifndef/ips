@@ -92,7 +92,7 @@ pub fn get_field_widths(interfaces: &[InterfaceData], args: &crate::Args) -> Has
     let mut widths = HashMap::new();
 
     widths.insert(IfcField::Name, 0);
-    widths.insert(IfcField::Ip, 15);
+    widths.insert(IfcField::Ip, 0);
     widths.insert(IfcField::Status, 0);
     widths.insert(IfcField::Mac, 0);
     widths.insert(IfcField::Ipv6, 0);
@@ -103,6 +103,12 @@ pub fn get_field_widths(interfaces: &[InterfaceData], args: &crate::Args) -> Has
         if let Some(width) = widths.get_mut(&IfcField::Name) {
             if interface.interface_name.len() > *width {
                 *width = interface.interface_name.len() + 1;
+            }
+        }
+
+        if let Some(width) = widths.get_mut(&IfcField::Ip) {
+            if interface.ip_addr.len() > *width {
+                *width = interface.ip_addr.len() + 1;
             }
         }
 
