@@ -1,7 +1,10 @@
-use crate::interface_data;
 use crate::colors;
+use crate::interface_data;
 
-pub fn get_formatted_output(args: crate::Args, mut interfaces: Vec<interface_data::InterfaceData>) -> Vec<String> {
+pub fn get_formatted_output(
+    args: crate::Args,
+    mut interfaces: Vec<interface_data::InterfaceData>,
+) -> Vec<String> {
     let widths = interface_data::get_field_widths(&interfaces, &args);
 
     if !args.nocolor {
@@ -22,17 +25,15 @@ pub fn get_formatted_output(args: crate::Args, mut interfaces: Vec<interface_dat
                 let col_width = widths.get(col).unwrap();
                 let whitespace = col_width - data.len();
                 line.push_str(data);
-                line.push_str(
-                    &format!(
-                        "{:>width$}",
-                        "",
-                        width = if data.is_empty() && !args.nocolor {
-                            whitespace - colors::ColorTokens::TOKENS_LEN
-                        } else {
-                            whitespace
-                        }
-                    )
-                );
+                line.push_str(&format!(
+                    "{:>width$}",
+                    "",
+                    width = if data.is_empty() && !args.nocolor {
+                        whitespace - colors::ColorTokens::TOKENS_LEN
+                    } else {
+                        whitespace
+                    }
+                ));
             }
 
             lines_for_interface.push(line);
@@ -44,35 +45,75 @@ pub fn get_formatted_output(args: crate::Args, mut interfaces: Vec<interface_dat
     lines
 }
 
-fn get_colorized_interfaces_data(interfaces: Vec<interface_data::InterfaceData>) -> Vec<interface_data::InterfaceData> {
-    interfaces.into_iter().map(
-        |interface| {
-            interface_data::InterfaceData {
-                interface_name: format!("{}{}{}", colors::ColorTokens::GREEN, interface.interface_name, colors::ColorTokens::ENDING),
-                ip_addr: format!("{}{}{}", colors::ColorTokens::YELLOW, interface.ip_addr, colors::ColorTokens::ENDING),
-                status: format!("{}{}{}", colors::ColorTokens::RED, interface.status, colors::ColorTokens::ENDING),
-                mac_addr: format!("{}{}{}", colors::ColorTokens::BRIGHT_GREEN, interface.mac_addr, colors::ColorTokens::ENDING),
-                ipv6_addrs: interface.ipv6_addrs.into_iter().map(
-                    |ipv6_addr| {
-                        format!("{}{}{}", colors::ColorTokens::CYAN, ipv6_addr, colors::ColorTokens::ENDING)
-                    }
-                ).collect(),
-                gateway: format!("{}{}{}", colors::ColorTokens::MAGENTA, interface.gateway, colors::ColorTokens::ENDING),
-                connections: interface.connections.into_iter().map(
-                    |connection| {
-                        format!("{}{}{}", colors::ColorTokens::BLUE, connection, colors::ColorTokens::ENDING)
-                    }
-                ).collect()
-            }
-        }
-    ).collect()
+fn get_colorized_interfaces_data(
+    interfaces: Vec<interface_data::InterfaceData>,
+) -> Vec<interface_data::InterfaceData> {
+    interfaces
+        .into_iter()
+        .map(|interface| interface_data::InterfaceData {
+            interface_name: format!(
+                "{}{}{}",
+                colors::ColorTokens::GREEN,
+                interface.interface_name,
+                colors::ColorTokens::ENDING
+            ),
+            ip_addr: format!(
+                "{}{}{}",
+                colors::ColorTokens::YELLOW,
+                interface.ip_addr,
+                colors::ColorTokens::ENDING
+            ),
+            status: format!(
+                "{}{}{}",
+                colors::ColorTokens::RED,
+                interface.status,
+                colors::ColorTokens::ENDING
+            ),
+            mac_addr: format!(
+                "{}{}{}",
+                colors::ColorTokens::BRIGHT_GREEN,
+                interface.mac_addr,
+                colors::ColorTokens::ENDING
+            ),
+            ipv6_addrs: interface
+                .ipv6_addrs
+                .into_iter()
+                .map(|ipv6_addr| {
+                    format!(
+                        "{}{}{}",
+                        colors::ColorTokens::CYAN,
+                        ipv6_addr,
+                        colors::ColorTokens::ENDING
+                    )
+                })
+                .collect(),
+            gateway: format!(
+                "{}{}{}",
+                colors::ColorTokens::MAGENTA,
+                interface.gateway,
+                colors::ColorTokens::ENDING
+            ),
+            connections: interface
+                .connections
+                .into_iter()
+                .map(|connection| {
+                    format!(
+                        "{}{}{}",
+                        colors::ColorTokens::BLUE,
+                        connection,
+                        colors::ColorTokens::ENDING
+                    )
+                })
+                .collect(),
+        })
+        .collect()
 }
 
 fn get_chosen_cols(args: &crate::Args) -> Vec<interface_data::IfcField> {
     let mut cols = vec![
         interface_data::IfcField::Name,
         interface_data::IfcField::Ip,
-        interface_data::IfcField::Status
+        interface_data::IfcField::Status,
     ];
 
     if args.mac {

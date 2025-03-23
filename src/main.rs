@@ -1,8 +1,8 @@
 use clap::Parser;
 
-mod interface_data;
-mod formatting;
 mod colors;
+mod formatting;
+mod interface_data;
 
 /// Application that prints your network interfaces with associated information, such as ipv4 address, status etc
 #[derive(Parser, Debug)]
@@ -26,9 +26,8 @@ pub struct Args {
 
     /// Disable colored output
     #[arg(short, long)]
-    nocolor: bool
+    nocolor: bool,
 }
-
 
 fn main() {
     let args = Args::parse();

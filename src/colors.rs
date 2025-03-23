@@ -1,6 +1,4 @@
-pub struct ColorTokens {
-
-}
+pub struct ColorTokens {}
 
 impl ColorTokens {
     pub const RED: &str = "\x1b[31m";
@@ -16,4 +14,3 @@ impl ColorTokens {
     pub const ENDING: &str = "\x1b[0m";
     pub const TOKENS_LEN: usize = 9;
 }
-

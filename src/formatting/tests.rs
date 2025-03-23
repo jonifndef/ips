@@ -7,20 +7,18 @@ fn test_single_ifc_without_ip() {
         ipv6: false,
         gateway: false,
         connections: false,
-        nocolor: false
+        nocolor: false,
     };
 
-    let interfaces = vec![
-        interface_data::InterfaceData {
-            interface_name: String::from("ollebolle"),
-            ip_addr: String::from(""),
-            mac_addr: String::from("AA:BB:CC:DD:EE:FF"),
-            status: String::from("DOWN"),
-            ipv6_addrs: vec![],
-            gateway: String::from(""),
-            connections: vec![]
-        }
-    ];
+    let interfaces = vec![interface_data::InterfaceData {
+        interface_name: String::from("ollebolle"),
+        ip_addr: String::from(""),
+        mac_addr: String::from("AA:BB:CC:DD:EE:FF"),
+        status: String::from("DOWN"),
+        ipv6_addrs: vec![],
+        gateway: String::from(""),
+        connections: vec![],
+    }];
 
     let output = get_formatted_output(args, interfaces);
 
@@ -35,7 +33,7 @@ fn test_multiple_without_ip() {
         ipv6: false,
         gateway: false,
         connections: false,
-        nocolor: false
+        nocolor: false,
     };
 
     let interfaces = vec![
@@ -46,9 +44,7 @@ fn test_multiple_without_ip() {
             status: String::from("DOWN"),
             ipv6_addrs: vec![],
             gateway: String::from(""),
-            connections: vec![
-                String::from("my_connection_yao")
-            ]
+            connections: vec![String::from("my_connection_yao")],
         },
         interface_data::InterfaceData {
             interface_name: String::from("ollebolle_the_second"),
@@ -57,9 +53,7 @@ fn test_multiple_without_ip() {
             status: String::from("UP"),
             ipv6_addrs: vec![],
             gateway: String::from(""),
-            connections: vec![
-                String::from("another_connection_yao")
-            ]
+            connections: vec![String::from("another_connection_yao")],
         },
         interface_data::InterfaceData {
             interface_name: String::from("ollebolle_yo"),
@@ -68,10 +62,8 @@ fn test_multiple_without_ip() {
             status: String::from("DOWN"),
             ipv6_addrs: vec![],
             gateway: String::from(""),
-            connections: vec![
-                String::from("another_connection_yao")
-            ]
-        }
+            connections: vec![String::from("another_connection_yao")],
+        },
     ];
 
     let output = get_formatted_output(args, interfaces);
@@ -89,7 +81,7 @@ fn test_mac() {
         ipv6: false,
         gateway: false,
         connections: false,
-        nocolor: false
+        nocolor: false,
     };
 
     let interfaces = vec![
@@ -103,9 +95,7 @@ fn test_mac() {
                 String::from("fe80::5fa:c189:2ae:94a2/64"),
             ],
             gateway: String::from(""),
-            connections: vec![
-                String::from("my_connection_yao")
-            ]
+            connections: vec![String::from("my_connection_yao")],
         },
         interface_data::InterfaceData {
             interface_name: String::from("ollebolle_the_second"),
@@ -114,9 +104,7 @@ fn test_mac() {
             status: String::from("UP"),
             ipv6_addrs: vec![],
             gateway: String::from(""),
-            connections: vec![
-                String::from("another_connection_yao")
-            ]
+            connections: vec![String::from("another_connection_yao")],
         },
         interface_data::InterfaceData {
             interface_name: String::from("ollebolle_yo"),
@@ -125,10 +113,8 @@ fn test_mac() {
             status: String::from("UP"),
             ipv6_addrs: vec![],
             gateway: String::from(""),
-            connections: vec![
-                String::from("another_connection_yao")
-            ]
-        }
+            connections: vec![String::from("another_connection_yao")],
+        },
     ];
 
     let output = get_formatted_output(args, interfaces);
@@ -143,7 +129,7 @@ fn test_mac_and_connections() {
         ipv6: false,
         gateway: false,
         connections: true,
-        nocolor: false
+        nocolor: false,
     };
 
     let interfaces = vec![
@@ -157,9 +143,7 @@ fn test_mac_and_connections() {
                 String::from("fe80::5fa:c189:2ae:94a2/64"),
             ],
             gateway: String::from(""),
-            connections: vec![
-                String::from("my_connection_yao")
-            ]
+            connections: vec![String::from("my_connection_yao")],
         },
         interface_data::InterfaceData {
             interface_name: String::from("ollebolle_the_second"),
@@ -168,9 +152,7 @@ fn test_mac_and_connections() {
             status: String::from("UP"),
             ipv6_addrs: vec![],
             gateway: String::from(""),
-            connections: vec![
-                String::from("another_connection_yao")
-            ]
+            connections: vec![String::from("another_connection_yao")],
         },
         interface_data::InterfaceData {
             interface_name: String::from("ollebolle_yo"),
@@ -179,10 +161,8 @@ fn test_mac_and_connections() {
             status: String::from("UP"),
             ipv6_addrs: vec![],
             gateway: String::from(""),
-            connections: vec![
-                String::from("another_connection_yao")
-            ]
-        }
+            connections: vec![String::from("another_connection_yao")],
+        },
     ];
 
     let output = get_formatted_output(args, interfaces);
@@ -197,7 +177,7 @@ fn test_one_formatting_ipv6() {
         ipv6: true,
         gateway: false,
         connections: false,
-        nocolor: false
+        nocolor: false,
     };
 
     let interfaces = vec![
@@ -212,7 +192,7 @@ fn test_one_formatting_ipv6() {
                 String::from("fa20:bbdd:c189:2ae:94:a21f:b71d/64"),
             ],
             gateway: String::from(""),
-            connections: vec![]
+            connections: vec![],
         },
         interface_data::InterfaceData {
             interface_name: String::from("ollebolle_the_second"),
@@ -225,7 +205,7 @@ fn test_one_formatting_ipv6() {
                 String::from("fa20:bbdd:c189:2ae:94:a21f:b71d/64"),
             ],
             gateway: String::from(""),
-            connections: vec![]
+            connections: vec![],
         },
         interface_data::InterfaceData {
             interface_name: String::from("ollebolle_yo"),
@@ -238,8 +218,8 @@ fn test_one_formatting_ipv6() {
                 String::from("fdaa:bbcc:ddee:0:9347:deb9:2fa3:82a3:ccff/64"),
             ],
             gateway: String::from(""),
-            connections: vec![]
-        }
+            connections: vec![],
+        },
     ];
 
     let output = get_formatted_output(args, interfaces);
@@ -262,7 +242,7 @@ fn test_formatting_ipv6_connections() {
         ipv6: true,
         gateway: false,
         connections: true,
-        nocolor: false
+        nocolor: false,
     };
 
     let interfaces = vec![
@@ -281,7 +261,7 @@ fn test_formatting_ipv6_connections() {
                 String::from("hejconbacon"),
                 String::from("olle_connection_yo"),
                 String::from("mmmm"),
-            ]
+            ],
         },
         interface_data::InterfaceData {
             interface_name: String::from("ollebolle_the_second"),
@@ -294,23 +274,21 @@ fn test_formatting_ipv6_connections() {
                 String::from("olle_connection_yo"),
                 String::from("hejconbacon"),
                 String::from("mmmm"),
-            ]
+            ],
         },
         interface_data::InterfaceData {
             interface_name: String::from("ollebolle_yo"),
             ip_addr: String::from("192.168.1.4/24"),
             mac_addr: String::from(""),
             status: String::from("UP"),
-            ipv6_addrs: vec![
-                String::from("fe80::5fa::::94a2/64"),
-            ],
+            ipv6_addrs: vec![String::from("fe80::5fa::::94a2/64")],
             gateway: String::from(""),
             connections: vec![
                 String::from("mmmm"),
                 String::from("hejconbacon"),
                 String::from("olle_connection_yo"),
-            ]
-        }
+            ],
+        },
     ];
 
     let output = get_formatted_output(args, interfaces);
@@ -333,7 +311,7 @@ fn test_formatting_mac_ipv6_gw_connection() {
         ipv6: true,
         gateway: true,
         connections: true,
-        nocolor: false
+        nocolor: false,
     };
 
     let interfaces = vec![
@@ -347,9 +325,7 @@ fn test_formatting_mac_ipv6_gw_connection() {
                 String::from("fe80::5fa:c189:2ae:94a2/64"),
             ],
             gateway: String::from(""),
-            connections: vec![
-                String::from("hejconbacon"),
-            ]
+            connections: vec![String::from("hejconbacon")],
         },
         interface_data::InterfaceData {
             interface_name: String::from("ollebolle_the_second"),
@@ -358,9 +334,7 @@ fn test_formatting_mac_ipv6_gw_connection() {
             status: String::from("UP"),
             ipv6_addrs: vec![],
             gateway: String::from(""),
-            connections: vec![
-                String::from("olle_connection_yo"),
-            ]
+            connections: vec![String::from("olle_connection_yo")],
         },
         interface_data::InterfaceData {
             interface_name: String::from("ollebolle_yo"),
@@ -369,10 +343,8 @@ fn test_formatting_mac_ipv6_gw_connection() {
             status: String::from("UP"),
             ipv6_addrs: vec![],
             gateway: String::from(""),
-            connections: vec![
-                String::from("mmmm"),
-            ]
-        }
+            connections: vec![String::from("mmmm")],
+        },
     ];
 
     let output = get_formatted_output(args, interfaces);

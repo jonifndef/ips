@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
+use duct::cmd;
 use pnet::datalink;
 use pnet::ipnetwork::IpNetwork;
-use duct::cmd;
 
 use crate::colors;
 
@@ -14,7 +14,7 @@ pub struct InterfaceData {
     pub mac_addr: String,
     pub ipv6_addrs: Vec<String>,
     pub gateway: String,
-    pub connections: Vec<String>
+    pub connections: Vec<String>,
 }
 
 #[derive(Debug, Eq, PartialEq, Hash)]
@@ -25,7 +25,7 @@ pub enum IfcField {
     Mac,
     Ipv6,
     Gw,
-    Conn
+    Conn,
 }
 
 //impl Hash for IfcField {
@@ -35,25 +35,66 @@ pub enum IfcField {
 impl InterfaceData {
     pub fn get(&self, field: &IfcField, linenum: usize) -> &str {
         let val = match field {
-            IfcField::Name   => if linenum == 0 { self.interface_name.as_str() } else { "" },
-            IfcField::Ip     => if linenum == 0 { self.ip_addr.as_str() } else { "" },
-            IfcField::Status => if linenum == 0 { self.status.as_str() } else { "" },
-            IfcField::Mac    => if linenum == 0 { self.mac_addr.as_str() } else { "" },
-            IfcField::Ipv6   => if let Some(addr) = self.ipv6_addrs.get(linenum) { addr.as_str() } else { "" },
-            IfcField::Gw     => if linenum == 0 { self.gateway.as_str() } else { "" },
-            IfcField::Conn   => if let Some(connection) = self.connections.get(linenum) { connection.as_str() } else { "" },
+            IfcField::Name => {
+                if linenum == 0 {
+                    self.interface_name.as_str()
+                } else {
+                    ""
+                }
+            }
+            IfcField::Ip => {
+                if linenum == 0 {
+                    self.ip_addr.as_str()
+                } else {
+                    ""
+                }
+            }
+            IfcField::Status => {
+                if linenum == 0 {
+                    self.status.as_str()
+                } else {
+                    ""
+                }
+            }
+            IfcField::Mac => {
+                if linenum == 0 {
+                    self.mac_addr.as_str()
+                } else {
+                    ""
+                }
+            }
+            IfcField::Ipv6 => {
+                if let Some(addr) = self.ipv6_addrs.get(linenum) {
+                    addr.as_str()
+                } else {
+                    ""
+                }
+            }
+            IfcField::Gw => {
+                if linenum == 0 {
+                    self.gateway.as_str()
+                } else {
+                    ""
+                }
+            }
+            IfcField::Conn => {
+                if let Some(connection) = self.connections.get(linenum) {
+                    connection.as_str()
+                } else {
+                    ""
+                }
+            }
         };
 
         val
     }
 }
 
-pub fn get_interface_data() -> Vec::<InterfaceData> {
+pub fn get_interface_data() -> Vec<InterfaceData> {
     let mut interface_data = Vec::<InterfaceData>::new();
 
     let interfaces = datalink::interfaces();
-    for interface in interfaces
-    {
+    for interface in interfaces {
         if interface.is_loopback() {
             continue;
         }
@@ -69,9 +110,7 @@ pub fn get_interface_data() -> Vec::<InterfaceData> {
                 IpNetwork::V4(ip_addr) => {
                     data.ip_addr = ip_addr.to_string();
                 }
-                IpNetwork::V6(ip_addr) => {
-                    data.ipv6_addrs.push(ip_addr.to_string())
-                }
+                IpNetwork::V6(ip_addr) => data.ipv6_addrs.push(ip_addr.to_string()),
             }
         }
 
@@ -88,7 +127,10 @@ pub fn get_interface_data() -> Vec::<InterfaceData> {
     interface_data
 }
 
-pub fn get_field_widths(interfaces: &[InterfaceData], args: &crate::Args) -> HashMap<IfcField, usize> {
+pub fn get_field_widths(
+    interfaces: &[InterfaceData],
+    args: &crate::Args,
+) -> HashMap<IfcField, usize> {
     let mut widths = HashMap::new();
 
     widths.insert(IfcField::Name, 0);
@@ -180,7 +222,8 @@ fn get_gateway(interface: &datalink::NetworkInterface, data: &mut InterfaceData)
         .pipe(cmd!("grep", "UG[ \t]"))
         .pipe(cmd!("grep", &interface.name))
         .pipe(cmd!("awk", "{print $2}"))
-        .read() {
+        .read()
+    {
         data.gateway = output.trim().to_string();
     }
 }
@@ -190,7 +233,8 @@ fn get_connections(interface: &datalink::NetworkInterface, data: &mut InterfaceD
     if let Ok(output) = cmd!("nmcli", "-t", "con", "show")
         .pipe(cmd!("grep", &interface.name))
         .pipe(cmd!("awk", "-F:", "{print $1}"))
-        .read() {
+        .read()
+    {
         let trimmed_out_str = output.trim_end();
         data.connections.push(trimmed_out_str.to_string());
     }
