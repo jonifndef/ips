@@ -1,4 +1,5 @@
 use clap::Parser;
+use std::process;
 
 mod colors;
 mod formatting;
@@ -31,8 +32,17 @@ pub struct Args {
 
 fn main() {
     let args = Args::parse();
-    let interfaces = interface_data::get_interface_data();
-    let output = formatting::get_formatted_output(args, interfaces);
+    let mut output: Vec<String> = vec![];
+    let interfaces = interface_data::get_interface_data(&args);
+    match interfaces {
+        Ok(ollebolle) => {
+            output = formatting::get_formatted_output(args, ollebolle);
+        },
+        Err(err) => {
+            println!("{}", err);
+            process::exit(-1);
+        }
+    }
 
     for line in output {
         println!("{line}");

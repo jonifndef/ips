@@ -1,9 +1,12 @@
 use std::collections::HashMap;
+use std::process;
+use std::io;
 
 use duct::cmd;
 use pnet::datalink;
 use pnet::ipnetwork::IpNetwork;
 
+use crate::Args;
 use crate::colors;
 
 #[derive(Default, Debug)]
@@ -90,7 +93,7 @@ impl InterfaceData {
     }
 }
 
-pub fn get_interface_data() -> Vec<InterfaceData> {
+pub fn get_interface_data(args: &Args) -> Result<Vec<InterfaceData>, io::Error> {
     let mut interface_data = Vec::<InterfaceData>::new();
 
     let interfaces = datalink::interfaces();
@@ -118,13 +121,23 @@ pub fn get_interface_data() -> Vec<InterfaceData> {
             data.mac_addr = mac_addr.to_string();
         }
 
-        get_gateway(&interface, &mut data);
-        get_connections(&interface, &mut data);
+        if args.gateway {
+            match get_gateway(&interface) {
+                Ok(gw_result) => {
+                    data.gateway = gw_result;
+                }
+                Err(err) => {
+                    return Err(err);
+                }
+
+            }
+        }
+        //let conn_result = get_connections(&interface, &mut data);
 
         interface_data.push(data);
     }
 
-    interface_data
+    Ok(interface_data)
 }
 
 pub fn get_field_widths(
@@ -216,26 +229,31 @@ pub fn get_field_widths(
     widths
 }
 
-fn get_gateway(interface: &datalink::NetworkInterface, data: &mut InterfaceData) {
+fn get_gateway(interface: &datalink::NetworkInterface) -> Result<String, io::Error> {
     // route -n | grep 'UG[ \t]' | grep 'wlp2s0' | awk '{print $2}'
-    if let Ok(output) = cmd!("route", "-n")
+    let output = cmd!("route", "-n")
         .pipe(cmd!("grep", "UG[ \t]"))
         .pipe(cmd!("grep", &interface.name))
         .pipe(cmd!("awk", "{print $2}"))
-        .read()
-    {
-        data.gateway = output.trim().to_string();
-    }
+        .read()?;
+
+    Ok(output.trim().to_string())
 }
 
 fn get_connections(interface: &datalink::NetworkInterface, data: &mut InterfaceData) {
     // nmcli -t con show | grep "wlp2s0" | awk -F: '{print $1}'
-    if let Ok(output) = cmd!("nmcli", "-t", "con", "show")
+    match cmd!("nmcli", "-t", "con", "show")
         .pipe(cmd!("grep", &interface.name))
         .pipe(cmd!("awk", "-F:", "{print $1}"))
         .read()
     {
-        let trimmed_out_str = output.trim_end();
-        data.connections.push(trimmed_out_str.to_string());
+        Ok(output) => {
+            let trimmed_out_str = output.trim_end();
+            data.connections.push(trimmed_out_str.to_string());
+        },
+        Err(_) => {
+            println!("Unable to run the \"nmcli\" command. Is it installed on your system?");
+            process::exit(-1);
+        }
     }
 }
