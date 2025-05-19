@@ -232,8 +232,8 @@ pub fn get_field_widths(
 fn get_gateway(interface: &datalink::NetworkInterface) -> Result<String, io::Error> {
     // route -n | grep 'UG[ \t]' | grep 'wlp2s0' | awk '{print $2}'
     let output = cmd!("route", "-n")
-        .pipe(cmd!("grep", "UG[ \t]"))
-        .pipe(cmd!("grep", &interface.name))
+        .pipe(cmd!("grep", "UG[ \t]").stderr_to_stdout())
+        .pipe(cmd!("grep", &interface.name).stderr_to_stdout())
         .pipe(cmd!("awk", "{print $2}"))
         .read()?;
 
