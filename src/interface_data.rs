@@ -132,7 +132,16 @@ pub fn get_interface_data(args: &Args) -> Result<Vec<InterfaceData>, io::Error> 
 
             }
         }
-        //let conn_result = get_connections(&interface, &mut data);
+        if args.connections {
+            match get_connections(&interface) {
+                Ok(conn_result) => {
+                    data.connections.push(conn_result);
+                }
+                Err(err) => {
+                    return Err(err);
+                }
+            }
+        }
 
         interface_data.push(data);
     }
@@ -235,25 +244,19 @@ fn get_gateway(interface: &datalink::NetworkInterface) -> Result<String, io::Err
         .pipe(cmd!("grep", "UG[ \t]").stderr_to_stdout())
         .pipe(cmd!("grep", &interface.name).stderr_to_stdout())
         .pipe(cmd!("awk", "{print $2}"))
+        .unchecked()
         .read()?;
 
     Ok(output.trim().to_string())
 }
 
-fn get_connections(interface: &datalink::NetworkInterface, data: &mut InterfaceData) {
+fn get_connections(interface: &datalink::NetworkInterface) -> Result<String, io::Error> {
     // nmcli -t con show | grep "wlp2s0" | awk -F: '{print $1}'
-    match cmd!("nmcli", "-t", "con", "show")
-        .pipe(cmd!("grep", &interface.name))
+    let output = cmd!("nmcli", "-t", "con", "show")
+        .pipe(cmd!("grep", &interface.name).stderr_to_stdout())
         .pipe(cmd!("awk", "-F:", "{print $1}"))
-        .read()
-    {
-        Ok(output) => {
-            let trimmed_out_str = output.trim_end();
-            data.connections.push(trimmed_out_str.to_string());
-        },
-        Err(_) => {
-            println!("Unable to run the \"nmcli\" command. Is it installed on your system?");
-            process::exit(-1);
-        }
-    }
+        .unchecked()
+        .read()?;
+
+    Ok(output.trim().to_string())
 }

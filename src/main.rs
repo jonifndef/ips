@@ -32,17 +32,11 @@ pub struct Args {
 
 fn main() {
     let args = Args::parse();
-    let mut output: Vec<String> = vec![];
     let interfaces = interface_data::get_interface_data(&args);
-    match interfaces {
-        Ok(ollebolle) => {
-            output = formatting::get_formatted_output(args, ollebolle);
-        },
-        Err(err) => {
-            println!("{}", err);
-            process::exit(-1);
-        }
-    }
+    let output = match interfaces {
+        Ok(interfaces) => formatting::get_formatted_output(args, interfaces),
+        Err(err) => vec![ err.to_string() ]
+    };
 
     for line in output {
         println!("{line}");
